@@ -27,3 +27,8 @@ https://fastapi.tiangolo.com/tutorial/first-steps/
 
 now try static files
 https://fastapi.tiangolo.com/tutorial/static-files/
+
+TODO: check out the jinja template instructions that can be used with static files
+
+https://fastapi.tiangolo.com/tutorial/websockets/
+finally trying out the websocket demo and it didn't work :(
