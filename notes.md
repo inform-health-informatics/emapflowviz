@@ -24,3 +24,6 @@ pip install uvicorn
 
 now try the hello world fastapi example
 https://fastapi.tiangolo.com/tutorial/first-steps/
+
+now try static files
+https://fastapi.tiangolo.com/tutorial/static-files/
