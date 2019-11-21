@@ -11,21 +11,13 @@ templates = Jinja2Templates(directory='app/templates')
 app = Starlette()
 
 
-@app.route("/")
 async def homepage(request):
     return templates.TemplateResponse('index.html', {'request': request})
 
-# routes = [
-#     Route('/', endpoint=homepage),
-#     Mount('/static', StaticFiles(directory='static'), name='static')
-# ]
-
-# @app.route("/")
-# async def homepage(request):
-#     return HTMLResponse(Template(template).render())
-
-
-app.mount("/app/static", StaticFiles(directory="app/static"), name="static")
+routes = [
+    Route('/', endpoint=homepage),
+    Mount('/static', StaticFiles(directory='/app/static'), name='static')
+]
 
 
 @app.websocket_route("/ws")
