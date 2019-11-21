@@ -4,8 +4,10 @@ hello:
 	@echo ">>> hello world"
 
 dreload:
-	@echo ">>> hello world"
-	docker run -d -p 80:80 -v $(pwd):/app mystar /start-reload.sh
+	@echo ">>> running app with /app as external directory"
+	# dropping the d flag since I want to see what it's doing
+	# docker run -d -p 80:80 -v $(pwd):/app mystar /start-reload.sh
+	docker run -p 80:80 -v $(pwd):/app mystar /start-reload.sh
 
 dviz:
 	# run viz
