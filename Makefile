@@ -1,5 +1,5 @@
 # List non-file related targets else they will be monitored by make
-.PHONY: hello dreload  dbuild dbash dviz clean
+.PHONY: hello dreload  dbuild dbash dviz clean dkill dprune
 hello:
 	@echo ">>> hello world"
 
@@ -11,6 +11,7 @@ dreload:
 
 dviz:
 	# run viz
+	docker build -t mystar . 
 	docker run -p 80:80  mystar  
 
 dbuild:
@@ -27,3 +28,12 @@ clean:
 	# @ symbol stops the command being echoed itself
 	@echo ">>> cleaning files from ./tmp"
 	rm -rf tmp/* 
+
+dkill:
+	docker kill $(docker ps -q --filter ancestor=mystar )
+
+dprune:
+	# prune all containers older than a week that are not currently running
+	docker container prune --filter "until=24h"
+	# prune all images
+	docker image prune -a --filter "until=24h"
