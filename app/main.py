@@ -1,51 +1,30 @@
 from starlette.applications import Starlette
 from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket
+from starlette.templating import Jinja2Templates
 from jinja2 import Template
 
 from starlette.staticfiles import StaticFiles
 
-template = """\
-<!DOCTYPE HTML>
-<html>
-<head>
-    <script type = "text/javascript">
-        function runWebsockets() {
-            if ("WebSocket" in window) {
-                var ws = new WebSocket("ws://localhost:80/ws");
-                ws.onopen = function() {
-                    console.log("Sending websocket data");
-                    ws.send("Hello From Client");
-                };
-                ws.onmessage = function(e) {
-                    alert(e.data);
-                };
-                ws.onclose = function() {
-                    console.log("Closing websocket connection");
-                };
-            } else {
-                alert("WS not supported, sorry!");
-            }
-        }
-    </script>
-</head>
-<body>
-    <p>hello from starlette template</p>
-    <p>revision: now pip install happens in a layer before app deployment</p>
-    <body><a href="javascript:runWebsockets()">Say Hello From Client</a></body>
-</body>
-</html>
-"""
+templates = Jinja2Templates(directory='app/templates')
 
 app = Starlette()
 
-
 @app.route("/")
 async def homepage(request):
-    return HTMLResponse(Template(template).render())
+    return templates.TemplateResponse('index.html', {'request': request})
+
+# routes = [
+#     Route('/', endpoint=homepage),
+#     Mount('/static', StaticFiles(directory='static'), name='static')
+# ]
+
+# @app.route("/")
+# async def homepage(request):
+#     return HTMLResponse(Template(template).render())
 
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/app/static", StaticFiles(directory="static"), name="static")
 
 
 @app.websocket_route("/ws")

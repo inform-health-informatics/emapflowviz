@@ -1,7 +1,11 @@
 # List non-file related targets else they will be monitored by make
-.PHONY: hello dbuild dbash dviz clean
+.PHONY: hello dreload  dbuild dbash dviz clean
 hello:
 	@echo ">>> hello world"
+
+dreload:
+	@echo ">>> hello world"
+	docker run -d -p 80:80 -v $(pwd):/app mystar /start-reload.sh
 
 dviz:
 	# run viz
