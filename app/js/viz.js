@@ -28,3 +28,14 @@ function runWebsockets() {
         alert("WS not supported, sorry!");
     }
 }
+
+window.onload = function main () {
+    // table inspect
+    d3.select("#viz_inspect")
+        .selectAll("p")
+        .data(bedmoves)
+        .enter()
+        .append("p")
+        // .text("foobar");
+        .text(function(d) { return (d); });
+}

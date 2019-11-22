@@ -4,6 +4,12 @@ hello:
 	@echo ">>> hello world"
 	echo "$(PWD)"
 
+start_postgres:
+	# pg_ctl does not behave for me unless I start from the server directory
+	@echo ">>> run the following commands"
+	@echo "cd ~/data/postgres"
+	@echo "pg_ctl -D . restart"
+
 dreload:
 	@echo ">>> running app with /app as external directory"
 	# rebuild then run in reload mode

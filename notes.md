@@ -37,3 +37,7 @@ suggest that I start again with this; of note, this _is_ running in docker
 2019-11-22t102703
 fixed!
 now let's just retest a simple d3 interaction
+
+2019-11-22t155950
+now need to see if I can get it to pull from an external postgres db
+then deploy in docker on the GAE
