@@ -1,6 +1,6 @@
 # import time
 # import datetime
-# import random
+import random
 # from random import randint
 # from datetime import timedelta
 
@@ -43,7 +43,8 @@ async def websocket_endpoint(websocket):
     while True:
         mesg = await websocket.receive_text()
         # await websocket.send_text(mesg.replace("Client", "Server"))
-        point_data = {"foo": "bar"}
+        bar = random.randrange(10, 100)
+        point_data = {"foo": bar}
         point_data = json.dumps(point_data,  default=str)
         await websocket.send_json(point_data)
     await websocket.close()
