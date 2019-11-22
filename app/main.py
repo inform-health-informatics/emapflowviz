@@ -12,9 +12,11 @@ templates = Jinja2Templates(directory="/app/templates")
 async def homepage(request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 routes = [
     Route("/", endpoint=homepage),
     Mount("/static", StaticFiles(directory="/app/static"), name="static"),
+    Mount("/js", StaticFiles(directory="/app/js"), name="js")
     # TODO see below: enabling this route means the app fails
     # Route('/ws', endpoint=websocket_endpoint)
 ]
@@ -23,7 +25,7 @@ app = Starlette(routes=routes)
 
 
 # TODO decorating the route is OK; but including in the routes array produces a 403 error
-@app.websocket_route('/ws')
+@app.websocket_route("/ws")
 async def websocket_endpoint(websocket):
     await websocket.accept()
     # Process incoming messages
