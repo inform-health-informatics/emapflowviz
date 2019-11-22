@@ -1,11 +1,13 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <link href="{{ url_for('static', path='style.css')}} " rel="stylesheet" type="text/css" media="screen" />
+    <!-- <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script> -->
+    <!-- <link href="{{ url_for('static', path='style.css')}} " rel="stylesheet" type="text/css" media="screen" /> -->
     <script type = "text/javascript">
         function runWebsockets() {
             if ("WebSocket" in window) {
                 var ws = new WebSocket("ws://localhost:80/ws");
+                // var ws = new WebSocket("ws://127.0.0.1:80/ws");
                 ws.onopen = function() {
                     console.log("Sending websocket data");
                     ws.send("Hello From Client");
@@ -24,6 +26,8 @@
 </head>
 <body>
     <p>hello from starlette template</p>
+    <p>revision: now pip install happens in a layer before app deployment</p>
+    <p>revision: now running from templates folder</p>
     <p>revision: foo bar</p>
     <body><a href="javascript:runWebsockets()">Say Hello From Client</a></body>
 </body>
