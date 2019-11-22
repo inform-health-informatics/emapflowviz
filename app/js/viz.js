@@ -1,3 +1,5 @@
+const bedmoves = [];
+
 function runWebsockets() {
     if ("WebSocket" in window) {
         var ws = new WebSocket("ws://localhost:80/ws");
@@ -6,7 +8,10 @@ function runWebsockets() {
             ws.send("Hello From Client");
         };
         ws.onmessage = function(e) {
-            alert(e.data);
+            let msg = JSON.parse(e.data)
+            // alert(e.data);
+            bedmoves.push(msg);
+            console.log(bedmoves);
         };
         ws.onclose = function() {
             console.log("Closing websocket connection");

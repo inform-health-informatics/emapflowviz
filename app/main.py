@@ -1,3 +1,14 @@
+# import time
+# import datetime
+# import random
+# from random import randint
+# from datetime import timedelta
+
+import json
+
+# import psycopg2
+# import psycopg2.extras # for dictionary cursor
+
 from starlette.applications import Starlette
 from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket
@@ -31,5 +42,8 @@ async def websocket_endpoint(websocket):
     # Process incoming messages
     while True:
         mesg = await websocket.receive_text()
-        await websocket.send_text(mesg.replace("Client", "Server"))
+        # await websocket.send_text(mesg.replace("Client", "Server"))
+        point_data = {"foo": "bar"}
+        point_data = json.dumps(point_data,  default=str)
+        await websocket.send_json(point_data)
     await websocket.close()
