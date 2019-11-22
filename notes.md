@@ -28,7 +28,8 @@ https://fastapi.tiangolo.com/tutorial/first-steps/
 now try static files
 https://fastapi.tiangolo.com/tutorial/static-files/
 
-TODO: check out the jinja template instructions that can be used with static files
-
-https://fastapi.tiangolo.com/tutorial/websockets/
-finally trying out the websocket demo and it didn't work :(
+2019-11-22t005330
+spent ages trying to fix the ws 403 error; failed
+now gone back to the super simple gist
+https://gist.github.com/akiross/a423c4e8449645f2076c44a54488e973
+suggest that I start again with this; of note, this _is_ running in docker
