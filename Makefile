@@ -2,17 +2,19 @@
 .PHONY: hello dreload  dbuild dbash dviz clean dkill dprune
 hello:
 	@echo ">>> hello world"
+	echo "$(PWD)"
 
 dreload:
 	@echo ">>> running app with /app as external directory"
+	# rebuild then run in reload mode
+	docker build -t mystar . 
 	# dropping the d flag since I want to see what it's doing
-	# docker run -d -p 80:80 -v $(pwd):/app mystar /start-reload.sh
-	docker run -p 80:80 -v $(pwd):/app mystar /start-reload.sh
+	docker run -p 80:80 -v $(PWD)/app:/app mystar /start-reload.sh 
 
 dviz:
 	# run viz
 	docker build -t mystar . 
-	docker run -p 80:80  mystar  
+	docker run -d -p 80:80  mystar  
 
 dbuild:
 	# fresh build
