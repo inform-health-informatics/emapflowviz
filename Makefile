@@ -13,19 +13,34 @@ start_postgres:
 dreload:
 	@echo ">>> running app with /app as external directory"
 	# rebuild then run in reload mode
-	docker build -t mystar . 
+	docker build \
+		--build-arg HTTP_PROXY \
+		--build-arg HTTPS_PROXY \
+		--build-arg http_proxy \
+		--build-arg https_proxy \
+		-t mystar . 
 	# dropping the d flag since I want to see what it's doing
 	docker run -p 80:80 -v $(PWD)/app:/app mystar /start-reload.sh 
 
 dviz:
 	# run viz
-	docker build -t mystar . 
+	docker build \
+		--build-arg HTTP_PROXY \
+		--build-arg HTTPS_PROXY \
+		--build-arg http_proxy \
+		--build-arg https_proxy \
+		-t mystar . 
 	docker run -d -p 80:80  mystar  
 
 dbuild:
 	# fresh build
 	@echo ">>> rebuilding the docker image, and labelled mystar"
-	docker build -t mystar . 
+	docker build \
+		--build-arg HTTP_PROXY \
+		--build-arg HTTPS_PROXY \
+		--build-arg http_proxy \
+		--build-arg https_proxy \
+		-t mystar . 
 	docker image ls | grep mystar
 
 dbash:
