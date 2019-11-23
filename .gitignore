@@ -1,4 +1,13 @@
 # python rubbish
 __pycache__
-# text editor
+
+# text editor, IDE etc.
 .vscode
+.Rproj.user
+*.Rproj
+
+
+# data files that don't need version control
+ADT.csv
+ADT_events.csv
+

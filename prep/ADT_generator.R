@@ -118,7 +118,7 @@ dt_events <- melt.data.table(
   measure.vars=c("start_time", "end_time") )
 # Now sort so you can drop duplicate times (where one start_time is the same as the preceding end_time)
 dt_events <- dt_events[order(value, variable)]
-dt_events <- unique(dt_events[1:30], by=c("name", "value"))
+dt_events <- unique(dt_events, by=c("name", "value"))
 setnames(dt_events, "variable", "event")
 setnames(dt_events, "resource", "ward")
 setnames(dt_events, "value", "time")

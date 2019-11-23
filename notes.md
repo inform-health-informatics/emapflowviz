@@ -40,4 +40,7 @@ now let's just retest a simple d3 interaction
 
 2019-11-22t155950
 now need to see if I can get it to pull from an external postgres db
-then deploy in docker on the GAE
+TODO: then deploy in docker on the GAE
+
+2019-11-22t215252
+set up the event loop so that it reads from the postgres database spontaneously (without the need to click)
