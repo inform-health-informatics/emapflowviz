@@ -5,6 +5,6 @@ FROM tiangolo/uvicorn-gunicorn:python3.7
 # - [ ] @NOTE: (2019-11-22) fix for problems with libssl in postgres/python 
 RUN apt-get update && apt-get install libssl-dev libffi-dev
 
-COPY requirements.txt .
+COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY app/ /app/

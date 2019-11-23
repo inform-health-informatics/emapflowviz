@@ -14,9 +14,20 @@ from starlette.websockets import WebSocket
 from starlette.templating import Jinja2Templates
 from starlette.routing import Route, Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
+from starlette.config import Config
 
 # Imports: local
-# None yet
+
+# import settings
+config = Config(".env")
+
+DB_HOST=config('DB_HOST', cast=str, default="host.docker.internal")
+DB_NAME=config('DB_NAME', cast=str)
+DB_PORT=config('DB_PORT', cast=int)
+# TODO use startlettes secret class: https://www.starlette.io/config/
+DB_PASSWORD=config('DB_PASSWORD', cast=str)
+DB_USER=config('DB_USER', cast=str)
+
 
 # Define global variables
 
@@ -28,11 +39,10 @@ templates = Jinja2Templates(directory="/app/templates")
 # TODO move connection string details to ENV file
 print(">>> Opening connection to PostgreSQL")
 conn = psycopg2.connect(
-    host="host.docker.internal",
-    # host="localhost",
-    database="mart_flow",
-    user="steve",
-    password=""
+    host=DB_HOST,
+    database=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD
 )
 print(">>> Connection open, making cursor")
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -51,6 +61,9 @@ async def websocket_endpoint(websocket: WebSocket):
     TIME_NOW = 100  # uses the elapsed time column in the data
     TIME_MULT = 1  # multiplier to speed up time passing else marches in 60s steps
     TIME_ENDS = 600
+
+    # await websocket.send_text()
+    await websocket.send_json({"foo": DB_HOST})
 
     try:
         while TIME_NOW < TIME_ENDS:
