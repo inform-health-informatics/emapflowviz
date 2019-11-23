@@ -44,3 +44,9 @@ TODO: then deploy in docker on the GAE
 
 2019-11-22t215252
 set up the event loop so that it reads from the postgres database spontaneously (without the need to click)
+
+2019-11-23t105950
+now load initial data where time < current time
+then recast loop so that it polls every second (but you can speed up to pretend to accelerate time)
+and the query pulls all new data
+now recast loop so that it simulates
