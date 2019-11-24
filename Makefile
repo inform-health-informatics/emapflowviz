@@ -36,6 +36,9 @@ dhello:
 		-e MODULE_NAME="hello" \
 		mystar /start-reload.sh 
 
+		# -p 5901:5901 -p 80:80 -v $(PWD)/app:/app \
+		# -e PORT="5901" \
+
 dreload:
 	@echo ">>> running app with /app as external directory"
 	docker run -v $(PWD)/app:/app mystar rm -rf __pycache__
@@ -48,7 +51,9 @@ dreload:
 		-t mystar . 
 	# dropping the d flag since I want to see what it's doing
 	docker run \
-		-p 5901:80 -v $(PWD)/app:/app mystar /start-reload.sh 
+		--name test_mystar --rm \
+		-p 5901:80 -v $(PWD)/app:/app \
+		mystar /start-reload.sh 
 
 dviz:
 	# run viz
