@@ -2,9 +2,12 @@
 # but I use requirements.txt rather than only install starlette
 FROM tiangolo/uvicorn-gunicorn:python3.7
 
-# - [ ] @NOTE: (2019-11-22) fix for problems with libssl in postgres/python 
-RUN apt-get update && apt-get install libssl-dev libffi-dev
+# fix for problems with libssl in postgres/python 
+# then adds acl for permissions issues below
+RUN apt-get update && apt-get install libssl-dev libffi-dev acl
 
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY app/ /app/
+RUN chown -R 1015:994 /app && chmod -R g+rws,o+rws /app && setfacl -d -m g::rwx /app
+
