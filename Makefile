@@ -29,12 +29,10 @@ dhello:
 		--build-arg https_proxy \
 		-t mystar . 
 	# dropping the d flag since I want to see what it's doing
-	docker container rm test_mystar
 	docker run \
-		--network host \
 		--name test_mystar \
-		-p 5901:5901 -p 80:80 -v $(PWD)/app:/app \
-		-e PORT="5901" \
+		--rm \
+		-p 5901:80 -v $(PWD)/app:/app \
 		-e MODULE_NAME="hello" \
 		mystar /start-reload.sh 
 
