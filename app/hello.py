@@ -15,8 +15,6 @@ template = """\
             if ("WebSocket" in window) {
                 //var ws = new WebSocket("ws://localhost:5901/ws");
                 var ws = new WebSocket("ws://172.16.149.155:5901/ws");
-                // var ws = new WebSocket("ws://10.140.38.100:5901/ws");
-                // var ws = new WebSocket("ws://0.0.0.0:5901/ws");
 	        console.log('sfsg: websocket found in window')
                 ws.onopen = function() {
                     console.log("Sending websocket data");

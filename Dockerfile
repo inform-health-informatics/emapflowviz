@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install libssl-dev libffi-dev acl
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY app/ /app/
+# attempt to set permissions so that can clean up externally mounted volume during dev
 RUN chown -R 1015:994 /app && chmod -R g+rws,o+rws /app && setfacl -d -m g::rwx /app
-EXPOSE 80
-EXPOSE 5901
 

@@ -29,6 +29,7 @@ dhello:
 		--build-arg https_proxy \
 		-t mystar . 
 	# dropping the d flag since I want to see what it's doing
+	docker container rm test_mystar
 	docker run \
 		--network host \
 		--name test_mystar \
