@@ -1,8 +1,14 @@
 # List non-file related targets else they will be monitored by make
 .PHONY: hello dreload dhello dbuild dbash dbashv dviz clean dkill dprune
+
+# HOSTIP=`ip -4 addr show scope global dev docker0 | grep inet | awk '{print $$2}' | cut -d / -f 1`
+# HOSTIP="172.17.0.1"
+
 hello:
 	@echo ">>> hello world"
 	echo "$(PWD)"
+	# check that HOSTIP resolved OK
+	# echo "$(HOSTIP)"
 
 start_postgres:
 	# pg_ctl does not behave for me unless I start from the server directory
@@ -24,7 +30,10 @@ dhello:
 		-t mystar . 
 	# dropping the d flag since I want to see what it's doing
 	docker run \
-		-p 5901:80 -v $(PWD)/app:/app \
+		--network host \
+		--name test_mystar \
+		-p 5901:5901 -p 80:80 -v $(PWD)/app:/app \
+		-e PORT="5901" \
 		-e MODULE_NAME="hello" \
 		mystar /start-reload.sh 
 

@@ -10,4 +10,6 @@ COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY app/ /app/
 RUN chown -R 1015:994 /app && chmod -R g+rws,o+rws /app && setfacl -d -m g::rwx /app
+EXPOSE 80
+EXPOSE 5901
 
