@@ -1,8 +1,11 @@
 # secrets!
 .env
+.Renviron
 
-# python rubbish
+# python and Rrubbish
 __pycache__
+.Rhistory
+.RData
 
 # text editor, IDE etc.
 .vscode
@@ -13,4 +16,7 @@ __pycache__
 # data files that don't need version control
 ADT.csv
 ADT_events.csv
+ward_keys.csv
+care_site_clean.csv
+omop_live_care_site.csv
 

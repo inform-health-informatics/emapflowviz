@@ -50,3 +50,10 @@ now load initial data where time < current time
 then recast loop so that it polls every second (but you can speed up to pretend to accelerate time)
 and the query pulls all new data
 now recast loop so that it simulates
+
+
+2019-11-24t185423 now works wrt UCLH GAE environment
+next task it to make it work with a realistic visit_detail table
+then build a realisit simulation
+...
+or switch from this for now and work with the measurement table and the moving averages
