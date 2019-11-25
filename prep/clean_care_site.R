@@ -21,13 +21,6 @@ library(airtabler)
 assert_that(nchar(Sys.getenv("AIRTABLE_API_KEY"))>0)
 AIRTABLE_EMAP_BASE <- "appWUjERknFDJRBp1"
 
-EMAP_DATAFIELDS <-
-  airtable(
-    base = AIRTABLE_EMAP_BASE,
-    tables = c("EMAP fields", "ward_lookup")
-  )
-
-EMAP_DATAFIELDS$ward_lookup$select()
 
 # load the current care sites
 dt <- setDT(readr::read_csv("data/omop_live_care_site.csv"))
@@ -77,8 +70,25 @@ dt[,patient_lounge := ifelse(str_detect(room, "PATLNGE"), TRUE, FALSE) ]
 
 # Now merge with original datatable
 # for wards via Airtable hand updated key
+EMAP_DATAFIELDS <-
+  airtable(
+    base = AIRTABLE_EMAP_BASE,
+    tables = c("EMAP fields", "ward_lookup")
+  )
+
 ward_lookup <- data.table(EMAP_DATAFIELDS$ward_lookup$select())
 mdt <- dt
 mdt <- ward_lookup[,.(ward_hl7,building,slug)][mdt, on=c("ward_hl7==ward"), ]
 setnames(mdt, "ward_hl7", "ward")
 mdt
+
+setcolorder(mdt, c(
+  "care_site_name",
+  "ward",
+  "room",
+  "bed"
+))
+
+# Save to csv for local processing
+write_csv(mdt, "data/care_site_clean.csv")
+# Finally push this back to airtable

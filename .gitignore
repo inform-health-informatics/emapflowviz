@@ -2,10 +2,11 @@
 .env
 .Renviron
 
-# python and Rrubbish
+# python and R rubbish
 __pycache__
 .Rhistory
 .RData
+tmp/
 
 # text editor, IDE etc.
 .vscode
@@ -14,6 +15,8 @@ __pycache__
 
 
 # data files that don't need version control
+data/local
+data/secure
 ADT.csv
 ADT_events.csv
 ward_keys.csv

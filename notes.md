@@ -57,3 +57,9 @@ next task it to make it work with a realistic visit_detail table
 then build a realisit simulation
 ...
 or switch from this for now and work with the measurement table and the moving averages
+
+2019-11-25t182637
+so I think it will be much easier to get a MWE with the measurements table
+though I note this is not working reliably in omop_live so should construct from emap_star
+maybe you could just count fact types as they are stored in star?
+rather than waste time this evening trying to make the connection via the VPN to check; let's just assume that you can with some SQL magic recreate a stream of measurements with timestamps
