@@ -13,8 +13,8 @@ template = """\
         function runWebsockets() {
 	    console.log('sfsg: inside runWebsockets function')
             if ("WebSocket" in window) {
-                var ws = new WebSocket("ws://localhost:5901/ws");
-                //var ws = new WebSocket("ws://172.16.149.155:5901/ws");
+                //var ws = new WebSocket("ws://localhost:5901/ws");
+                var ws = new WebSocket("ws://172.16.149.155:5901/ws");
 	        console.log('sfsg: websocket found in window')
                 ws.onopen = function() {
                     console.log("Sending websocket data");

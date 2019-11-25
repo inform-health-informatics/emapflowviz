@@ -58,9 +58,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
     # NOTE these variables are not seen if they are declared outside of the function
     TIME_THEN = 0
-    TIME_NOW = 100  # uses the elapsed time column in the data
-    TIME_MULT = 1  # multiplier to speed up time passing else marches in 60s steps
-    TIME_ENDS = 600
+    TIME_NOW = 1  # uses the elapsed time column in the data
+    TIME_MULT = 1/60  # multiplier to speed up time passing else marches in 60s steps
+    TIME_ENDS = 24
 
     # await websocket.send_text()
     await websocket.send_json({"foo": DB_HOST})
@@ -69,7 +69,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while TIME_NOW < TIME_ENDS:
 
             # Run query
-            SQL = "SELECT * FROM events WHERE (time < {} AND time >= {});".format(TIME_NOW, TIME_THEN)
+            SQL = "SELECT visit_detail_id, visit_start_datetime, visit_end_datetime, care_site_id, person_id, visit_occurrence_id from omop_live.visit_detail where NOW() - visit_start_datetime < INTERVAL '{} HOURS'  order by visit_start_datetime desc; ".format(TIME_NOW)
             # need this while debugging to undo bad SQL queries
             # curs.execute('ROLLBACK')
             curs.execute(SQL)
