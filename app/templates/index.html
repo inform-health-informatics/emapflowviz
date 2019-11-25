@@ -4,6 +4,7 @@
     <!-- styles -->
     <link href="{{ url_for('static', path='style.css')}} " rel="stylesheet" type="text/css" media="screen" />
     <!-- scripts -->
+    <script> var WEBSOCKET_SERVER = "{{ WEBSOCKET_SERVER }}"; console.log(WEBSOCKET_SERVER); </script>
     <script type="text/javascript" src="{{ url_for('js', path='lib/d3/d3.min.js')}}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('js', path='viz.js')}}" charset="utf-8"></script>
 </head>

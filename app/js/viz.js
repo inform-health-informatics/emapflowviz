@@ -1,9 +1,6 @@
 // deployment on the GAE
-const WEBSOCKET_SERVER = "ws://172.16.149.155:5901/ws"
-// local development within docker
-// const WEBSOCKET_SERVER = "ws://localhost:5901/ws"
-console.log('WEBSOCKET running on ' + WEBSOCKET_SERVER)
 const bedmoves = [];
+console.log(this.WEBSOCKET_SERVER);
 
 
 function runWebsockets() {

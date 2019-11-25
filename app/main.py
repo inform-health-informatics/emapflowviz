@@ -27,6 +27,7 @@ DB_PORT=config('DB_PORT', cast=int)
 # TODO use startlettes secret class: https://www.starlette.io/config/
 DB_PASSWORD=config('DB_PASSWORD', cast=str)
 DB_USER=config('DB_USER', cast=str)
+WEBSOCKET_SERVER=config('WEBSOCKET_SERVER', cast=str)
 
 
 # Define global variables
@@ -51,7 +52,10 @@ curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 async def homepage(request):
     print(">>> homepage route called")
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "WEBSOCKET_SERVER": WEBSOCKET_SERVER
+    })
 
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
