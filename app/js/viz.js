@@ -115,10 +115,11 @@ g.append("defs").append("clipPath")
     .attr("width", width)
     .attr("height", height);
 
-g.append("g")
-    .attr("class", "axis axis--x")
-    .attr("transform", "translate(0," + y(0) + ")")
-    .call(d3.axisBottom(x));
+// hide x-axis since you still need to work out the scale
+// g.append("g")
+//     .attr("class", "axis axis--x")
+//     .attr("transform", "translate(0," + y(0) + ")")
+//     .call(d3.axisBottom(x));
 
 g.append("g")
     .attr("class", "axis axis--y")
