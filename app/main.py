@@ -81,12 +81,12 @@ async def websocket_endpoint(websocket: WebSocket):
             SQL = sql.SQL("""
                 SELECT measurement_id, measurement_datetime, measurement_concept_id, value_as_number
                 FROM measurement
-                WHERE 
+                WHERE
                     measurement_datetime > '{}'
                     AND
                     measurement_datetime <= '{}'
                 ORDER BY measurement_datetime;
-                """.format( TIME_THEN, TIME_NOW))
+                """.format(TIME_THEN, TIME_NOW))
             curs.execute(SQL)
             rows = curs.fetchall()
 
@@ -95,7 +95,11 @@ async def websocket_endpoint(websocket: WebSocket):
             # TODO: print etc. does not work inside an async function
             # print(events[0])
 
-            await websocket.send_json(len(events))
+            await websocket.send_json({
+                "n_events": len(events),
+                "time_then": str(TIME_THEN),
+                "time_now": str(TIME_NOW)
+            } )
             for event in events:
                 await websocket.send_json(json.dumps(event, default=str))
                 await asyncio.sleep(SIM_SPEED_SECS/10)
