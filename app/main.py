@@ -15,23 +15,18 @@ from starlette.websockets import WebSocket
 from starlette.templating import Jinja2Templates
 from starlette.routing import Route, Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
-from starlette.config import Config
+
 
 # Imports: local
+from utils import utils_hello
+# TODO work out why outputs don't appear until after the programme restarts
+# assume it is because it is an application being run by a server
+utils_hello('bar1')
 
-# import settings
-config = Config(".env")
+# Define global variables from config and directly
+# import configuration
+import config as cfg
 
-DB_HOST = config("DB_HOST", cast=str, default="host.docker.internal")
-DB_NAME = config("DB_NAME", cast=str)
-DB_PORT = config("DB_PORT", cast=int)
-# TODO use startlettes secret class: https://www.starlette.io/config/
-DB_PASSWORD = config("DB_PASSWORD", cast=str)
-DB_USER = config("DB_USER", cast=str)
-WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
-
-
-# Define global variables
 
 templates = Jinja2Templates(directory="/app/templates")
 
@@ -41,7 +36,7 @@ templates = Jinja2Templates(directory="/app/templates")
 # TODO move connection string details to ENV file
 print(">>> Opening connection to PostgreSQL")
 conn = psycopg2.connect(
-    host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD
+    host=cfg.DB_HOST, database=cfg.DB_NAME, user=cfg.DB_USER, password=cfg.DB_PASSWORD
 )
 print(">>> Connection open, making cursor")
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -50,25 +45,30 @@ curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 async def homepage(request):
     print(">>> homepage route called")
     return templates.TemplateResponse(
-        "index.html", {"request": request, "WEBSOCKET_SERVER": WEBSOCKET_SERVER}
+        "index.html", {"request": request, "WEBSOCKET_SERVER": cfg.WEBSOCKET_SERVER}
     )
 
 
 async def websocket_endpoint(websocket: WebSocket):
+    """
+    Handles the websocket connection
+    """
+
+    TIME_START = cfg.TIME_START
+    TIME_ENDS = cfg.TIME_ENDS
+    TIME_NOW = cfg.TIME_NOW
+    TIME_DELTA = cfg.TIME_DELTA
+    TIME_MULT = cfg.TIME_MULT
+    SIM_SPEED_SECS = cfg.SIM_SPEED_SECS
+    SQL_STRING = cfg.SQL_STRING
+
     await websocket.accept()
 
-    # NOTE these variables are not seen if they are declared outside of the function
-    SIM_SPEED_SECS = 2
-    TIME_START = datetime.datetime(2019, 11, 23, 17)
-    TIME_ENDS = datetime.datetime(2019, 11, 25, 17)
-    TIME_NOW = TIME_START
-    TIME_DELTA = datetime.timedelta(hours=1)
-    TIME_MULT = 1
-
     # await websocket.send_text()
-    await websocket.send_json({"foo": DB_HOST})
+    await websocket.send_json({"foo": cfg.DB_HOST})
 
     try:
+        # NOTE these variables are not seen if they are declared outside of the function
         while TIME_NOW < TIME_ENDS:
 
             # now update times for next iteration of the loop
@@ -77,16 +77,7 @@ async def websocket_endpoint(websocket: WebSocket):
             TIME_NOW += TIME_MULT * TIME_DELTA
 
             # Run query
-            # SQL = "SELECT visit_detail_id, visit_start_datetime, visit_end_datetime, care_site_id, person_id, visit_occurrence_id from omop_live.visit_detail where NOW() - visit_start_datetime < INTERVAL '{} HOURS'  order by visit_start_datetime desc; ".format(TIME_NOW)
-            SQL = sql.SQL("""
-                SELECT measurement_id, measurement_datetime, measurement_concept_id, value_as_number
-                FROM measurement
-                WHERE
-                    measurement_datetime > '{}'
-                    AND
-                    measurement_datetime <= '{}'
-                ORDER BY measurement_datetime;
-                """.format(TIME_THEN, TIME_NOW))
+            SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
             curs.execute(SQL)
             rows = curs.fetchall()
 

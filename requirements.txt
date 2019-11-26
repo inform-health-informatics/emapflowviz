@@ -3,3 +3,9 @@ Jinja2==2.10.3
 starlette==0.13.0
 itsdangerous==1.1.0
 psycopg2==2.8.4
+
+# to manage data transformations
+numpy==1.17.4
+pandas==0.25.3
+pytz==2019.3
+six==1.13.0
