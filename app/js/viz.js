@@ -1,29 +1,113 @@
 // deployment on the GAE
-const bedmoves = [];
+const pts = [];
 console.log(this.WEBSOCKET_SERVER);
 var value_as_number = 100;
 
-var n = 40,
-    random = d3.randomNormal(0, .2),
-    data = d3.range(n).map(random);
+// =====================
+// set up variables etc.
+// =====================
 
-var svg = d3.select("svg"),
-    margin = {top: 20, right: 20, bottom: 20, left: 40},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom,
-    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+const margin = {top: 40, right: 40, bottom: 40, left: 40},
+    padding = {top: 60, right: 60, bottom: 60, left: 60},
+    outerWidth = 960,
+    outerHeight = 500,
+    innerWidth = outerWidth - margin.left - margin.right,
+    innerHeight = outerHeight - margin.top - margin.bottom,
+    width = innerWidth - padding.left - padding.right,
+    height = innerHeight - padding.top - padding.bottom;
 
-var x = d3.scaleLinear()
+// copied from Bostock's path demo
+// this just creates an empty data set with all the values set to 100
+// TODO n creates the 'x' axis: need to switch to using dates and times
+const n = 50,
+    data = d3.range(n).map(d => 100);
+
+const x = d3.scaleLinear()
     .domain([0, n - 1])
     .range([0, width]);
 
-var y = d3.scaleLinear()
+const y = d3.scaleLinear()
     .domain([0, 150])
     .range([height, 0]);
 
-var line = d3.line()
+const line = d3.line()
     .x(function(d, i) { return x(i); })
     .y(function(d, i) { return y(d); });
+
+const connection = new WebSocket(WEBSOCKET_SERVER);
+// debugging : temporary empty connection to avoid page errors
+// var connection = function () {};
+connection.onopen = function() {
+    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onclose = function() {
+    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onmessage = function(event) {
+    let newData = JSON.parse(
+        JSON.parse(event.data)
+        );
+    console.log(newData);
+    // let updateObject = map_data2pts(newData);
+    pts.push(newData);
+    value_as_number = newData.value_as_number;
+    console.log(value_as_number);
+    // updatePts(updateObject, pts);
+    updateTable();
+    // updateViz();
+}
+
+// test function to print the original patient load
+function updateTable () {
+
+    // console.log('sfsg: inside update table');
+    let dd = pts.sort(function(a,b) {
+        let aa = a.measurement_id;
+        let bb = b.measurement_id;
+        return aa < bb ? +1 : aa > bb ? -1 : 0;
+    }).slice(0,10);
+    console.log(dd);
+    
+    d3.select("#viz_inspect").select("table")
+
+        .selectAll("tr")
+            // .data(dd).enter()
+            // .append("tr")
+            .data(dd, function(i) {return i.measurement_id;})
+            .join(
+                enter => enter.append("tr"),
+                update => update,
+                exit => exit.remove()
+            )
+
+        .selectAll("td")
+            .data(function(d) { return d3.values(d); }).enter()
+            .append("td")
+            .text(function(d) { return (d); }) // ;
+}
+
+// =================================================================
+// the d3 functions need to run in here else there is nothing to see
+// =================================================================
+window.onload = function main () {
+
+// from the realtime example
+    
+// table inspect
+d3.select("#viz_inspect")
+    .append("table");
+
+// D3 set-up
+// set up svg to hold viz with margin transform
+const svg = d3.select("#viz").append("svg")
+    .attr("width", outerWidth)
+    .attr("height", outerHeight)
+
+const g = svg.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
 
 g.append("defs").append("clipPath")
     .attr("id", "clip")
@@ -50,43 +134,19 @@ g.append("g")
     .ease(d3.easeLinear)
     .on("start", tick);
 
-function runWebsockets() {
-    if ("WebSocket" in window) {
-        var ws = new WebSocket(WEBSOCKET_SERVER);
-        ws.onopen = function() {
-            console.log("Sending websocket data");
-            ws.send("Hello From Client");
-        };
-        ws.onmessage = function(e) {
-            // TODO work out why you need to parse this twice
-             msg = JSON.parse( JSON.parse(e.data))
-            // console.log(msg)
-            bedmoves.push(msg);
-            value_as_number = msg.value_as_number;
-            // add the new value
-            // data.push(value_as_number);
-            // Pop the old data point off the front.
-            // data.shift();
-
-
-
-            // inspect text
-            d3.select("#viz_inspect")
-                .selectAll("p")
-                .data(bedmoves)
-                .enter()
-                .append("p")
-                // .text("foobar");
-                .text(function(d) { return (d.value_as_number); });
-        };
-        ws.onclose = function() {
-            console.log("Closing websocket connection");
-        };
-    } else {
-        alert("WS not supported, sorry!");
-    }
+// table inspect
+d3.select("#viz_inspect")
+    .selectAll("p")
+    .data(pts)
+    .enter()
+    .append("p")
+    // .text("foobar");
+    .text(function(d) { return (d); });
 }
+// end main
+console.log("end main: so far so good");
 
+// this runs the animation and defines what happens with each browser frame refresh
 function tick() {
     // Push a new data point onto the back.
 
@@ -105,15 +165,3 @@ function tick() {
     data.shift();
 }
 
-window.onload = function main () {
-
-
-    // table inspect
-    d3.select("#viz_inspect")
-        .selectAll("p")
-        .data(bedmoves)
-        .enter()
-        .append("p")
-        // .text("foobar");
-        .text(function(d) { return (d); });
-}

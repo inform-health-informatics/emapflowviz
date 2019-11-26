@@ -30,6 +30,12 @@ td {
     padding: 5px;
 }
 
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
 
 .line {
   fill: none;

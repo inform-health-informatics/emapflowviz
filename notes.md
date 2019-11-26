@@ -63,3 +63,4 @@ so I think it will be much easier to get a MWE with the measurements table
 though I note this is not working reliably in omop_live so should construct from emap_star
 maybe you could just count fact types as they are stored in star?
 rather than waste time this evening trying to make the connection via the VPN to check; let's just assume that you can with some SQL magic recreate a stream of measurements with timestamps
+see https://bost.ocks.org/mike/path/

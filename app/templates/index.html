@@ -1,7 +1,9 @@
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
 <head>
-    <svg width="960" height="500"></svg>
+    <meta charset="UTF-8">
+    <title> EMAP live </title>
+    <!-- <svg width="960" height="500"></svg> -->
     <!-- styles -->
     <link href="{{ url_for('static', path='style.css')}} " rel="stylesheet" type="text/css" media="screen" />
     <!-- scripts -->
@@ -10,11 +12,9 @@
     <script type="text/javascript" src="{{ url_for('js', path='viz.js')}}" charset="utf-8"></script>
 </head>
 <body>
-    <p>hello from starlette template</p>
-    <p>revision: running in reload mode: really? YES!</p>
-    <body><a href="javascript:runWebsockets()">Say Hello From Client</a></body>
-
-    <p>Moving dots demonstrator</p>
+    <p>Live Haemoglobin results from UCLH</p>
+    <div id="viz"></div>
+    <p>Data inspector</p>
     <div id="viz_inspect"></div>
 
 </body>
