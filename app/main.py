@@ -18,10 +18,10 @@ from starlette.staticfiles import StaticFiles
 
 
 # Imports: local
-from utils import utils_hello
+import utils
 # TODO work out why outputs don't appear until after the programme restarts
 # assume it is because it is an application being run by a server
-utils_hello('bar1')
+utils.utils_hello('bar1')
 
 # Define global variables from config and directly
 # import configuration
@@ -30,15 +30,7 @@ import config as cfg
 
 templates = Jinja2Templates(directory="/app/templates")
 
-# POSTGRES CONNECTION
-# TODO factor this out into a separate module
-# setting up postgres stuff
-# TODO move connection string details to ENV file
-print(">>> Opening connection to PostgreSQL")
-conn = psycopg2.connect(
-    host=cfg.DB_HOST, database=cfg.DB_NAME, user=cfg.DB_USER, password=cfg.DB_PASSWORD
-)
-print(">>> Connection open, making cursor")
+conn = utils.make_postgres_conn(cfg)
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 
