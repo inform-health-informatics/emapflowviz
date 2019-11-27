@@ -91,5 +91,5 @@ setcolorder(mdt, c(
 ))
 
 # Save to csv for local processing
-write_csv(mdt, "data/care_site_clean.csv")
+write_csv(mdt, "app/static/data/care_site_clean.csv")
 # Finally push this back to airtable

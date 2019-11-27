@@ -1,3 +1,8 @@
+# Steve Haris
+# 2019-11-27
+# transforming visit_detail_table to long form; assumes no breaks in record
+# linear script to tezt the logic
+
 # Standard library
 import datetime
 
