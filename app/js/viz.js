@@ -64,8 +64,8 @@ function updateTable () {
 
     // console.log('sfsg: inside update table');
     let dd = pts.sort(function(a,b) {
-        let aa = a.measurement_id;
-        let bb = b.measurement_id;
+        let aa = a.visit_detail_id;
+        let bb = b.visit_detail_id;
         return aa < bb ? +1 : aa > bb ? -1 : 0;
     }).slice(0,10);
     console.log(dd);
@@ -75,7 +75,7 @@ function updateTable () {
         .selectAll("tr")
             // .data(dd).enter()
             // .append("tr")
-            .data(dd, function(i) {return i.measurement_id;})
+            .data(dd, function(i) {return i.visit_detail_id;})
             .join(
                 enter => enter.append("tr"),
                 update => update,

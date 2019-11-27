@@ -38,11 +38,12 @@ def join_visit_detail_to_care_site_clean(df: pd.DataFrame, csc: pd.DataFrame):
     df.merge(csc, how="left", left_on="care_site_id", right_on="care_site_id")
     return df
 
-def omop_visit_detail_to_long(df: pd.DataFrame) -> pd.DataFrame:
+def omop_visit_detail_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFrame:
     """
     Transforms the OMOP visit_detail table from wide to long
     and drops all end times except the last
     Assumes therefore that all visit_details are contiguous
+    fake_value: creates fake value_as_number for demoing
     """
 
     ID_VARS = ["person_id", "visit_occurrence_id", "visit_detail_id", "care_site_id"]
@@ -75,5 +76,8 @@ def omop_visit_detail_to_long(df: pd.DataFrame) -> pd.DataFrame:
 
     # Drop unnecessary columns
     df = df[ID_VARS + ['event', 'timestamp', 'detail_i']]
+
+    if fake_value:
+        df['value_as_number'] = np.random.random(df.shape[0])*200   
 
     return df

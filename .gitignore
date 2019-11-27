@@ -20,6 +20,6 @@ data/secure
 ADT.csv
 ADT_events.csv
 ward_keys.csv
-care_site_clean.csv
+data/care_site_clean.csv
 omop_live_care_site.csv
 

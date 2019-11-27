@@ -13,18 +13,29 @@ WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
 
 # Locally declared variables
 SIM_SPEED_SECS = 2
-TIME_START = datetime.datetime(2019, 11, 23, 17)
+TIME_START = datetime.datetime(2019, 4, 23, 17)
 TIME_ENDS = datetime.datetime(2019, 11, 25, 17)
 TIME_NOW = TIME_START
 TIME_DELTA = datetime.timedelta(hours=1)
-TIME_MULT = 1
+TIME_MULT = 7*24
 
-SQL_STRING  = """
-    SELECT measurement_id, measurement_datetime, measurement_concept_id, value_as_number
-    FROM measurement
+# Visit detail version
+SQL_STRING = """
+    SELECT * FROM VISIT_DETAIL
     WHERE
-        measurement_datetime > '{}'
+        visit_start_datetime > '{}'
         AND
-        measurement_datetime <= '{}'
-    ORDER BY measurement_datetime;
+        visit_start_datetime <= '{}'
+    ORDER BY visit_start_datetime;
 """
+
+# Measurement version
+# SQL_STRING  = """
+#     SELECT measurement_id, measurement_datetime, measurement_concept_id, value_as_number
+#     FROM measurement
+#     WHERE
+#         measurement_datetime > '{}'
+#         AND
+#         measurement_datetime <= '{}'
+#     ORDER BY measurement_datetime;
+# """

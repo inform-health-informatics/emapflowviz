@@ -16,6 +16,8 @@ from starlette.templating import Jinja2Templates
 from starlette.routing import Route, Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
+import pandas as pd
+import numpy as np
 
 # Imports: local
 import utils
@@ -69,22 +71,19 @@ async def websocket_endpoint(websocket: WebSocket):
             TIME_NOW += TIME_MULT * TIME_DELTA
 
             # Run query
+            
             SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
-            curs.execute(SQL)
-            rows = curs.fetchall()
-
-            # convert to json
-            events = [{i[0]: i[1] for i in row.items()} for row in rows]
-            # TODO: print etc. does not work inside an async function
-            # print(events[0])
+            df = pd.read_sql(SQL, conn)
+            df = utils.omop_visit_detail_to_long(df, fake_value=True)
 
             await websocket.send_json({
-                "n_events": len(events),
+                "n_events": df.shape[0],
                 "time_then": str(TIME_THEN),
                 "time_now": str(TIME_NOW)
             } )
-            for event in events:
-                await websocket.send_json(json.dumps(event, default=str))
+            for index, row in df.iterrows():
+                event = row.to_json()
+                await websocket.send_json(event)
                 await asyncio.sleep(SIM_SPEED_SECS/10)
             await asyncio.sleep(SIM_SPEED_SECS)
 
