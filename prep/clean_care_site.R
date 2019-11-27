@@ -32,7 +32,7 @@ dt[,.(care_site_name, ward, room, bed)]
 # now inspect and prob drop where room and bed not specified (assume these are OPD)
 dt[bed != "null",.(care_site_name, ward, room, bed)]
 dt[room != "null",.(care_site_name, ward, room, bed)]
-dt <- dt[room != "null" & bed != "null",.(care_site_name, ward, room, bed)]
+dt <- dt[room != "null" & bed != "null",.(care_site_id, care_site_name, ward, room, bed)]
 
 # DEFINE and merge on wards
 # down to 1787
@@ -83,6 +83,7 @@ setnames(mdt, "ward_hl7", "ward")
 mdt
 
 setcolorder(mdt, c(
+  "care_site_id",
   "care_site_name",
   "ward",
   "room",
