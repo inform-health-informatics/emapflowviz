@@ -16,6 +16,11 @@ const margin = {top: 40, right: 40, bottom: 40, left: 40},
     width = innerWidth - padding.left - padding.right,
     height = innerHeight - padding.top - padding.bottom;
 
+// node parameters (for groups above)
+const radius = 5,
+    node_padding = 1, // Space between nodes
+    cluster_padding = 5; // Space between nodes in different stages
+
 // copied from Bostock's path demo
 // this just creates an empty data set with all the values set to 100
 // TODO n creates the 'x' axis: need to switch to using dates and times
@@ -34,6 +39,24 @@ const line = d3.line()
     .x(function(d, i) { return x(i); })
     .y(function(d, i) { return y(d); });
 
+// Group coordinates and meta info.
+// these will be represented as 'nodes'
+let top_row = height*3/4
+let middle_row = height*2/4
+let bottom_row = height*1/4
+let left_col = width*1/4
+let middle_col = width*2/4
+let right_col = width*3/4
+
+const groups = {
+    "TRIAGE": { x: middle_col, y: middle_row, color: "#FAF49A", cnt: 0, fullname: "TRIAGE" },
+    "UTC": { x: left_col, y: top_row, color: "#BEE5AA", cnt: 0, fullname: "UTC" },
+    "MAJORS": { x: right_col, y: middle_row, color: "#93D1BA", cnt: 0, fullname: "MAJORS" },
+    "RESUS": { x: right_col, y: bottom_row, color: "#79BACE", cnt: 0, fullname: "RESUS" },
+    "OTHER": { x: left_col, y: bottom_row, color: "#FAF49A", cnt: 0, fullname: "OTHER" },
+    "PAEDS": { x: middle_col, y: bottom_row, color: "#BEE5AA", cnt: 0, fullname: "PAEDS" },
+};
+
 const connection = new WebSocket(WEBSOCKET_SERVER);
 // debugging : temporary empty connection to avoid page errors
 // var connection = function () {};
@@ -51,14 +74,83 @@ connection.onmessage = function(event) {
         JSON.parse(event.data)
         );
     console.log(newData);
-    // let updateObject = map_data2pts(newData);
-    pts.push(newData);
+
+    // pts.push(newData);
+    updatePts(newData, pts);
+    updateTable();
+    updateViz();
+
     value_as_number = newData.value_as_number;
     console.log(value_as_number);
-    // updatePts(updateObject, pts);
-    updateTable();
+}
+
+function updatePts(msg, pts) {
+    // push or update patient's current position
+
+    // prove that you can see the new data
+    // console.log("data to update");
+    console.log('sfsg: updatePts running');
+
+    // TODO generalise this since it depends on the data
+    // you should add in a key to the function arguments
+    // return index of patient if already in array else -1
+    let pts_index = pts.findIndex( i => {return i.visit_occurrence_id === msg.visit_occurrence_id;});
+    // push new patient or splice (delete and insert) as necessary
+    if (pts_index === -1) {
+        console.log('new patient ' + pts.length);
+        pts.push(msg);
+    } else {
+        console.log('existing patient');
+        // console.log(pts[pts_index]);
+        pts.splice(pts_index, 1, msg);
+        // console.log('new patient');
+        // console.log(pts[pts_index]);
+
+    };
+    console.log(pts)
+    // commenting out because ...
+    // don't do the update when the message arrives; use the tick instead
     // updateViz();
 }
+
+function updateViz (update_speed=500) {
+    console.log("Updating viz ...");
+
+    svg = window.svg1
+    //
+    t = svg.transition().duration(update_speed).ease(i => i);
+
+    
+    cs = svg.selectAll( "circle" )
+        .data(pts, function(d) {return d.name;})
+        .join(
+            enter => enter.append("circle")
+                .attr( "fill", "green" ) 
+                    .attr( "cx", d=>groups['TRIAGE'].x + Math.random())
+                    .attr( "cy", d=>groups['TRIAGE'].y + Math.random())
+                // .call(update => update.transition(t)
+                //     .attr( "cx", d=>groups[d.slug_room].x + Math.random())
+                //     .attr( "cy", d=>groups[d.slug_room].y + Math.random())
+                // ),
+                ,
+            update => update
+                .attr( "fill", "blue" ) 
+                .call(update => update.transition(t)
+                    .attr( "cx", d=>groups[d.slug_room].x + Math.random())
+                    .attr( "cy", d=>groups[d.slug_room].y + Math.random())
+                ),
+            exit => exit
+                .attr( "fill", "red" ) 
+                .call(
+                    exit => exit.transition(t)
+                    )
+                .remove()
+        )
+            .attr( "r",  d=>radius )
+            .attr( "opacity", "0.1" );
+
+}
+
 
 function updateTable () {
     // test function to print the original patient load
@@ -71,7 +163,7 @@ function updateTable () {
         let bb = b.timestamp;
         return aa < bb ? +1 : aa > bb ? -1 : 0;
     }).slice(0,10);
-    console.log(dd);
+    // console.log(dd);
     
     d3.select("#viz_inspect").select("table")
 
@@ -114,16 +206,42 @@ d3.select("#viz_inspect")
     .append("table");
 
 // main viz set up
+window.svg1 = d3.select("#viz1").append("svg")
+    .attr("width", outerWidth)
+    .attr("height", outerHeight)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// Group name labels
+svg1.selectAll('.grp')
+.data(d3.keys(groups))
+.join("text")
+    .attr("class", "grp")
+    .attr("text-anchor", "middle")
+    .attr("x", d => groups[d].x)
+    .attr("y", d => groups[d].y+50)
+    .text(d => groups[d].fullname);
+
+// Group counts
+svg1.selectAll('.grpcnt')
+    .data(d3.keys(groups))
+    .join("text")
+        .attr("class", "grpcnt")
+        .attr("text-anchor", "middle")
+        .attr("x", d => groups[d].x)
+        .attr("y", d => groups[d].y+70)
+        .text(d => groups[d].cnt);
+
 // set up svg to hold viz with margin transform
-const svg = d3.select("#viz").append("svg")
+const svg2 = d3.select("#viz2").append("svg")
     .attr("width", outerWidth)
     .attr("height", outerHeight)
 
-const g = svg.append("g")
+const g2 = svg2.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
-g.append("defs").append("clipPath")
+g2.append("defs").append("clipPath")
     .attr("id", "clip")
   .append("rect")
     .attr("width", width)
@@ -135,11 +253,11 @@ g.append("defs").append("clipPath")
 //     .attr("transform", "translate(0," + y(0) + ")")
 //     .call(d3.axisBottom(x));
 
-g.append("g")
+g2.append("g")
     .attr("class", "axis axis--y")
     .call(d3.axisLeft(y));
 
-g.append("g")
+g2.append("g")
     .attr("clip-path", "url(#clip)")
   .append("path")
     .datum(data)
@@ -170,5 +288,7 @@ function tick() {
         .on("start", tick);
     // Pop the old data point off the front.
     data.shift();
+
+    svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
 }
 
