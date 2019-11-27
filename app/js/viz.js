@@ -46,6 +46,7 @@ connection.onclose = function() {
 }
 
 connection.onmessage = function(event) {
+    // function should update the data that d3 accesses
     let newData = JSON.parse(
         JSON.parse(event.data)
         );
@@ -59,13 +60,15 @@ connection.onmessage = function(event) {
     // updateViz();
 }
 
-// test function to print the original patient load
 function updateTable () {
+    // test function to print the original patient load
+    // function updates the data not the viz? not sure this is correct
 
-    // console.log('sfsg: inside update table');
+    console.log('sfsg: updateTable running');
+    // sort patients so you just see the top 10 rows
     let dd = pts.sort(function(a,b) {
-        let aa = a.visit_detail_id;
-        let bb = b.visit_detail_id;
+        let aa = a.timestamp;
+        let bb = b.timestamp;
         return aa < bb ? +1 : aa > bb ? -1 : 0;
     }).slice(0,10);
     console.log(dd);
@@ -75,7 +78,7 @@ function updateTable () {
         .selectAll("tr")
             // .data(dd).enter()
             // .append("tr")
-            .data(dd, function(i) {return i.visit_detail_id;})
+            .data(dd, function(i) {return i.timestamp;})
             .join(
                 enter => enter.append("tr"),
                 update => update,
@@ -83,7 +86,18 @@ function updateTable () {
             )
 
         .selectAll("td")
-            .data(function(d) { return d3.values(d); }).enter()
+            // .data(function(d) { return d3.values(d); }).enter()
+            .data(function(d) { return [
+                d.visit_occurrence_id,
+                d.visit_detail_id,
+                d.timestamp,
+                d.care_site_name,
+                d.value_as_number,
+                d.ward,
+                d.slug_room,
+                d.room,
+                d.bed
+                ] ; }).enter()
             .append("td")
             .text(function(d) { return (d); }) // ;
 }
@@ -92,14 +106,14 @@ function updateTable () {
 // the d3 functions need to run in here else there is nothing to see
 // =================================================================
 window.onload = function main () {
-
-// from the realtime example
+// D3 set-up
+// this function initially draws the viz
     
-// table inspect
+// table inspect : 2nd div on page
 d3.select("#viz_inspect")
     .append("table");
 
-// D3 set-up
+// main viz set up
 // set up svg to hold viz with margin transform
 const svg = d3.select("#viz").append("svg")
     .attr("width", outerWidth)
@@ -135,20 +149,12 @@ g.append("g")
     .ease(d3.easeLinear)
     .on("start", tick);
 
-// table inspect
-d3.select("#viz_inspect")
-    .selectAll("p")
-    .data(pts)
-    .enter()
-    .append("p")
-    // .text("foobar");
-    .text(function(d) { return (d); });
 }
 // end main
 console.log("end main: so far so good");
 
-// this runs the animation and defines what happens with each browser frame refresh
 function tick() {
+    // this runs the animation and defines what happens with each browser frame refresh
     // Push a new data point onto the back.
 
     data.push(value_as_number);

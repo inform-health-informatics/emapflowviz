@@ -31,12 +31,24 @@ def make_postgres_conn(cfg):
     )
 
 
-def join_visit_detail_to_care_site_clean(df: pd.DataFrame, csc: pd.DataFrame):
+def join_visit_detail_to_care_site_clean(df: pd.DataFrame, csc: pd.DataFrame = DF_CSC):
     """
     Join care_site_clean on care_site_id
     """
-    df.merge(csc, how="left", left_on="care_site_id", right_on="care_site_id")
+    df = df.merge(csc, how="left", left_on="care_site_id", right_on="care_site_id")
     return df
+
+def filter_visit_detail_long(
+    df: pd.DataFrame,
+    column: str,
+    inclusions: list)  -> pd.DataFrame:
+    """
+    Filters out long form visit_detail by column using list of inclusions
+    """
+    # TODO convert so iterates over list of columns
+    df = df[df[column].isin(inclusions)]
+    return df
+
 
 def omop_visit_detail_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFrame:
     """

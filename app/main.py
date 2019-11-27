@@ -75,6 +75,8 @@ async def websocket_endpoint(websocket: WebSocket):
             SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
             df = pd.read_sql(SQL, conn)
             df = utils.omop_visit_detail_to_long(df, fake_value=True)
+            df = utils.join_visit_detail_to_care_site_clean(df)
+            df = utils.filter_visit_detail_long(df, column='ward', inclusions=['ED'])
 
             await websocket.send_json({
                 "n_events": df.shape[0],
