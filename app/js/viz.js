@@ -181,8 +181,7 @@ function updateTable () {
             // .data(function(d) { return d3.values(d); }).enter()
             .data(function(d) { return [
                 d.visit_occurrence_id,
-                d.visit_detail_id,
-                d.timestamp.toString(),
+                d.timestamp_str,
                 d.care_site_name,
                 d.value_as_number,
                 d.ward,

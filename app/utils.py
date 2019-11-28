@@ -211,6 +211,9 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     # Drop unnecessary columns
     df = df[['person_id', 'visit_occurrence_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
 
+    # Create a string representation of datetime
+    df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
     if fake_value:
         df['value_as_number'] = np.random.random(df.shape[0])*200   
 
