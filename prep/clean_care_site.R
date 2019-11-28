@@ -119,8 +119,9 @@ tdt[, slug_room := ifelse(str_detect(room, "MAJ"), "MAJORS", slug_room) ]
 tdt[, slug_room := ifelse(str_detect(room, "UTC"), "UTC", slug_room) ]
 tdt[, slug_room := ifelse(str_detect(room, "PAEDS"), "PAEDS", slug_room) ]
 tdt[, slug_room := ifelse(str_detect(room, "TRIAGE"), "TRIAGE", slug_room) ] # NB overwrites PAEDS TRIAGE
-tdt[, slug_room := ifelse(str_detect(room, "RAT"), "RAT", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "OTF"), "DIAGNOSTICS", slug_room) ]
+tdt[, slug_room := ifelse(str_detect(room, "DIAGNOSTICS"), "OTHER", slug_room) ]
+tdt[, slug_room := ifelse(str_detect(room, "RAT"), "OTHER", slug_room) ]
+tdt[, slug_room := ifelse(str_detect(room, "OTF"), "OTHER", slug_room) ]
 table(tdt$slug_room)
 glimpse(tdt)
 

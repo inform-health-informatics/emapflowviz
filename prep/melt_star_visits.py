@@ -91,51 +91,63 @@ df2 = df.pivot_table(
 df = df2.merge(df1, left_index=True, right_index=True)
 df
 df = df.reset_index()
-df[['encounter', 'pp_parent_fact_id', 'short_name_pp', 'LOCATION', 'value_as_datetime']]
+df = df[['encounter', 'pp_parent_fact_id', 'short_name_pp', 'LOCATION', 'value_as_datetime']]
+df = df.rename({
+    'encounter': 'visit_occurrence_id',
+    'short_name_pp': 'event',
+    'value_as_datetime': 'timestamp',
+    'LOCATION': 'care_site_name'
+}, axis=1)
 
-# df.groupby(['encounter', 'pp_parent_fact_id']).value_as_datetime.unstack()
-
-df.groupby(['encounter', 'pp_parent_fact_id'])['value_as_datetime'].unstack('short_name_pp')
-
-df.pivot_table(
-    index=['encounter', 'pp_parent_fact_id'],
-    columns='short_name_pp',
-    values='value_as_datetime'
-)
-
-
-df.set_index(ID_VARS, inplace=True)
-df.pivot(columns='short_name_pp', values='value_as_datetime')
-
-pd.pivot_table(df, 'value_as_datetime', index=ID_VARS, columns='short_name_pp')
+df = df[df['event'] != 'LOCATION']
+df
+df = df.sort_values(by=["timestamp"])
+df
+df = df.sort_values(by=["visit_occurrence_id", "timestamp"])
 df
 
-df = df[ALL_VARS]
-df = df.melt(
-    id_vars=ID_VARS,
-    value_vars=VALUE_VARS,
-    var_name="event",
-    value_name="timestamp"
-)
-# 
-# df.shape
-df = df.sort_values(by=["person_id", "visit_occurrence_id", "timestamp"])
+# TODO better way to track patients across bed moves
+# create a person_id so that we can update the correct dots
+# the following is nice but won't work b/c it is per query so just reproduce visit_occurrence_id
+# df['person_id'] = df.groupby('visit_occurrence_id').ngroup()
+df['person_id'] = df['visit_occurrence_id']
+df
+
+
 # TODO better error checking here: am assuming that every end = preceding start hence all trnasitions are perfect
 # Need a 'step' indicator by visit_occurence then delete all end times except for the last
+df = df.sort_values(by=["person_id", "timestamp"])
 df['detail_i'] = df.groupby(["person_id", "visit_occurrence_id"]).cumcount()+1
-# df.head()
+df
 
 # now create a max indicator
+df = df.sort_values(by=["person_id", "timestamp"])
 df['detail_i_max'] = df.groupby(["person_id", "visit_occurrence_id"])['detail_i'].transform(max)
-# df.head()
+df.head(10)
+
+tdf = df.copy()
+
+mask = (tdf['event'] == "ARRIVAL_TIME")
+tdf.loc[mask,'event']
+tdf.loc[mask,'event'] = 'visit_start_datetime'
+
+mask = (tdf['event'] == "DISCH_TIME")
+tdf.loc[mask,'event']
+tdf.loc[mask,'event'] = 'visit_end_datetime'
+
+df = tdf
+
+
 
 # now drop where visit_end_datetime unless detail_i = detail_i_max
 df = df[ (df.event == 'visit_start_datetime') |
     ((df.event == 'visit_end_datetime') & (df.detail_i == df.detail_i_max))]
 
-df = df[ID_VARS + ['event', 'timestamp', 'detail_i']]
+df
+
+df = df[['person_id', 'visit_occurrence_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
 # df.set_index('care_site_id', inplace=True)
-df.head()
+df.head(30)
 
 # Now join with care site info
 
@@ -143,7 +155,7 @@ care_site_clean = pd.read_csv('../data/care_site_clean.csv')
 # care_site_clean.set_index('care_site_id')
 care_site_clean.head()
 
-df.merge(care_site_clean, how="left", left_on="care_site_id", right_on="care_site_id")
+df.merge(care_site_clean, how="left", left_on="care_site_name", right_on="care_site_name")
 
 
 
