@@ -37,11 +37,15 @@ def make_postgres_conn(cfg, debug=False):
     )
 
 
-def join_visit_detail_to_care_site_clean(df: pd.DataFrame, csc: pd.DataFrame = DF_CSC):
+def join_visit_detail_to_care_site_clean(
+        df: pd.DataFrame,
+        join_on: str = "care_site_id",
+        csc: pd.DataFrame = DF_CSC):
     """
     Join care_site_clean on care_site_id
+    with option to modify join column (e.g. when using star, then use care_site_name)
     """
-    df = df.merge(csc, how="left", left_on="care_site_id", right_on="care_site_id")
+    df = df.merge(csc, how="left", left_on=join_on, right_on=join_on)
     return df
 
 def filter_visit_detail_long(

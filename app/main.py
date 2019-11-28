@@ -74,8 +74,17 @@ async def websocket_endpoint(websocket: WebSocket):
             
             SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
             df = pd.read_sql(SQL, conn)
-            df = utils.omop_visit_detail_to_long(df, fake_value=True)
-            df = utils.join_visit_detail_to_care_site_clean(df)
+
+            if cfg.STAR_OR_OMOP == 'OMOP':
+                df = utils.omop_visit_detail_to_long(df, fake_value=True)
+                df = utils.join_visit_detail_to_care_site_clean(df)
+            elif:
+                df = utils.star_visits_to_long()(df, fake_value=True)
+                df = utils.join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
+            else:
+                print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
+                sys.exit(1)
+
             df = utils.filter_visit_detail_long(df, column='ward', inclusions=['ED'])
 
             await websocket.send_json({

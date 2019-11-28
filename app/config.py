@@ -13,6 +13,9 @@ DB_USER = config("DB_USER", cast=str)
 WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
 
 # Locally declared variables
+# config to define which DB to use
+STAR_OR_OMOP=STAR
+# STAR_OR_OMOP=OMOP
 SIM_SPEED_SECS = 2
 TIME_START = datetime.datetime(2019, 4, 23, 17)
 TIME_ENDS = datetime.datetime(2019, 11, 25, 17)
