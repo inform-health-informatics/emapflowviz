@@ -77,17 +77,27 @@ async def websocket_endpoint(websocket: WebSocket):
             SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
             df = pd.read_sql(SQL, conn)
 
-            if STAR_OR_OMOP == 'OMOP':
-                df = utils.omop_visit_detail_to_long(df, fake_value=True)
-                df = utils.join_visit_detail_to_care_site_clean(df)
-            elif STAR_OR_OMOP == 'STAR':
-                df = utils.star_visits_to_long(df, fake_value=True)
-                df = utils.join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
-            else:
-                print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
-                sys.exit(1)
+            # TODO need some logic to handle empty or unhelpful queries
+            try:
+                if STAR_OR_OMOP == 'OMOP':
+                    df = utils.omop_visit_detail_to_long(df, fake_value=True)
+                    df = utils.join_visit_detail_to_care_site_clean(df)
+                elif STAR_OR_OMOP == 'STAR':
+                    df = utils.star_visits_to_long(df, fake_value=True)
+                    df = utils.join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
+                else:
+                    print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
+                    sys.exit(1)
+            except KeyError as e:
+                # KeyError raised when LOCATION not in index 
+                print(f"!!!: Error on database query: {e}")
+                print("!!!: Skipping forward one TIME_DELTA")
+                continue
 
             df = utils.filter_visit_detail_long(df, column='ward', inclusions=['ED'])
+            if df.shape[0] == 0:
+                print(">>>: No ward movements: skipping forward one TIME_DELTA")
+                continue
 
             await websocket.send_json({
                 "n_events": df.shape[0],
