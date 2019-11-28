@@ -212,7 +212,14 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     df = df[['person_id', 'visit_occurrence_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
 
     # Create a string representation of datetime
-    df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # df['timestamp']=df['timestamp'].dt.tz_localize('UTC')
+    # df['timestamp']=df['timestamp'].dt.tz_convert('Europe/London')
+    # df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S", utc=True)
+    # df['timestamp_str'] = df['timestamp'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S", utc=True))
+    # df['timestamp_str'] = df['timestamp'].apply(lambda x: x.to_datetime(utc=True))
+    # this is hacky but it works; everything else above fails
+    df['timestamp_str'] = df['timestamp'].apply(lambda x: str(x))
 
     if fake_value:
         df['value_as_number'] = np.random.random(df.shape[0])*200   
