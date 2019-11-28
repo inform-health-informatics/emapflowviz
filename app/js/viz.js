@@ -182,7 +182,7 @@ function updateTable () {
             .data(function(d) { return [
                 d.visit_occurrence_id,
                 d.visit_detail_id,
-                d.timestamp,
+                d.timestamp.toString(),
                 d.care_site_name,
                 d.value_as_number,
                 d.ward,

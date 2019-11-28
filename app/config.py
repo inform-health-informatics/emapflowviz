@@ -13,16 +13,16 @@ DB_USER = config("DB_USER", cast=str)
 WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
 
 # Locally declared variables
-DEBUG=True
+DEBUG=False
 STAR_OR_OMOP="STAR"  # config to define which DB to use
 
 # STAR_OR_OMOP="OMOP"
 SIM_SPEED_SECS = 2
-TIME_START = datetime.datetime(2019, 4, 23, 17)
-TIME_ENDS = datetime.datetime(2019, 11, 25, 17)
+TIME_START = datetime.datetime(2019, 11, 27, 19)
+TIME_ENDS = datetime.datetime(2019, 11, 29, 19)
 TIME_NOW = TIME_START
 TIME_DELTA = datetime.timedelta(hours=1)
-TIME_MULT = 7*24
+TIME_MULT = 1
 
 if DEBUG:
     SQL_STRING = "SELECT * FROM star_visits"
