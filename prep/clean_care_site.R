@@ -70,15 +70,17 @@ dt[,patient_lounge := ifelse(str_detect(room, "PATLNGE"), TRUE, FALSE) ]
 
 
 # grouping label for rooms
+# dt$slug_room <- NULL
 dt[ward=="ED", room]
-dt[, slug_room := ""] # set to empty
-dt[, slug_room := ifelse(str_detect(room, "RESUS"), "RESUS", slug_room) ]
-dt[, slug_room := ifelse(str_detect(room, "MAJ"), "MAJORS", slug_room) ]
-dt[, slug_room := ifelse(str_detect(room, "UTC"), "UTC", slug_room) ]
-dt[, slug_room := ifelse(str_detect(room, "PAEDS"), "PAEDS", slug_room) ]
-dt[, slug_room := ifelse(str_detect(room, "TRIAGE"), "TRIAGE", slug_room) ] # NB overwrites PAEDS TRIAGE
-dt[, slug_room := ifelse(str_detect(room, "RAT"), "RAT", slug_room) ]
-dt[, slug_room := ifelse(str_detect(room, "OTF"), "DIAGNOSTICS", slug_room) ]
+dt[ward=="ED", slug_room := "OTHER"] # set to empty
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "RESUS"), "RESUS", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "MAJ"), "MAJORS", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "UTC"), "UTC", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "PAEDS"), "PAEDS", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "TRIAGE"), "TRIAGE", slug_room) ] # NB overwrites PAEDS TRIAGE
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "RAT"), "RAT", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "OTF"), "OTHER", slug_room) ]
+dt[ward=="ED", slug_room := ifelse(str_detect(room, "DIAGNOSTICS"), "DIAGNOSTICS", slug_room) ]
 table(dt$slug_room)
 
 # Now merge with original datatable
@@ -107,22 +109,3 @@ setcolorder(mdt, c(
 write_csv(mdt, "app/static/data/care_site_clean.csv")
 # Finally push this back to airtable
 
-# Just some additonal work while on the train without internet and airtable
-quit()
-tdt <- read_csv("app/static/data/care_site_clean.csv")
-setDT(tdt)
-glimpse(tdt)
-tdt[ward=="ED", room]
-tdt[, slug_room := ""] # set to empty
-tdt[, slug_room := ifelse(str_detect(room, "RESUS"), "RESUS", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "MAJ"), "MAJORS", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "UTC"), "UTC", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "PAEDS"), "PAEDS", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "TRIAGE"), "TRIAGE", slug_room) ] # NB overwrites PAEDS TRIAGE
-tdt[, slug_room := ifelse(str_detect(room, "DIAGNOSTICS"), "OTHER", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "RAT"), "OTHER", slug_room) ]
-tdt[, slug_room := ifelse(str_detect(room, "OTF"), "OTHER", slug_room) ]
-table(tdt$slug_room)
-glimpse(tdt)
-
-write_csv(tdt, "app/static/data/care_site_clean.csv")
