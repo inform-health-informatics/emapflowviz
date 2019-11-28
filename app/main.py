@@ -54,7 +54,9 @@ async def websocket_endpoint(websocket: WebSocket):
     TIME_DELTA = cfg.TIME_DELTA
     TIME_MULT = cfg.TIME_MULT
     SIM_SPEED_SECS = cfg.SIM_SPEED_SECS
+    STAR_OR_OMOP = cfg.STAR_OR_OMOP
     SQL_STRING = cfg.SQL_STRING
+
 
     await websocket.accept()
 
@@ -75,11 +77,11 @@ async def websocket_endpoint(websocket: WebSocket):
             SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
             df = pd.read_sql(SQL, conn)
 
-            if cfg.STAR_OR_OMOP == 'OMOP':
+            if STAR_OR_OMOP == 'OMOP':
                 df = utils.omop_visit_detail_to_long(df, fake_value=True)
                 df = utils.join_visit_detail_to_care_site_clean(df)
-            elif:
-                df = utils.star_visits_to_long()(df, fake_value=True)
+            elif STAR_OR_OMOP == 'STAR':
+                df = utils.star_visits_to_long(df, fake_value=True)
                 df = utils.join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
             else:
                 print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
