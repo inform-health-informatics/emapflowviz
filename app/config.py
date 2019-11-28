@@ -4,6 +4,7 @@ from starlette.config import Config
 # Environment variables
 config = Config(".env")
 DB_HOST = config("DB_HOST", cast=str, default="host.docker.internal")
+DB_HOST_LOCAL = "localhost"
 DB_NAME = config("DB_NAME", cast=str)
 DB_PORT = config("DB_PORT", cast=int)
 # TODO use startlettes secret class: https://www.starlette.io/config/

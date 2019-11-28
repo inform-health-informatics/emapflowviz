@@ -60,8 +60,12 @@ from psycopg2 import sql
 import config as cfg
 import utils
 
-conn = utils.make_postgres_conn(cfg)
+conn = utils.make_postgres_conn(cfg, debug=True)
+
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+from utils import star_visits_to_long
+
 
 TIME_THEN = datetime.datetime(2019, 10, 27, 17)
 TIME_NOW = datetime.datetime(2019, 11, 23, 23)
@@ -75,6 +79,8 @@ SQL = sql.SQL(SQL_STRING.format(TIME_THEN, TIME_NOW))
 
 # Load data
 df = pd.read_sql(SQL, conn)
+star_visits_to_long(df)
+
 df = df.astype({"encounter": int, "pp_parent_fact_id": int, "attr_id_pf": int, "pf_parent_fact_id": int, "property_id": int})
 df.columns
 

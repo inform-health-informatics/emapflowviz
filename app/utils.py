@@ -19,12 +19,18 @@ def utils_hello(foo: str) -> str:
     print(foo)
 
 
-def make_postgres_conn(cfg):
+def make_postgres_conn(cfg, debug=False):
     """
     Connect to Postgres as per settings in config
+    Setting debug=True uses DB_HOST_LOCAL
     """
+    if debug:
+        _host = cfg.DB_HOST_LOCAL
+    else:
+        _host = cfg.DB_HOST
+
     return psycopg2.connect(
-        host=cfg.DB_HOST,
+        host=_host,
         database=cfg.DB_NAME,
         user=cfg.DB_USER,
         password=cfg.DB_PASSWORD
@@ -88,6 +94,118 @@ def omop_visit_detail_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.
 
     # Drop unnecessary columns
     df = df[ID_VARS + ['event', 'timestamp', 'detail_i']]
+
+    if fake_value:
+        df['value_as_number'] = np.random.random(df.shape[0])*200   
+
+    return df
+
+def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFrame:
+    """
+    Transforms the the star visit query to match as best as possible the OMOP visit_detail table conversion
+    Drops all end times except the last
+    Assumes therefore that all visit_details are contiguous
+    fake_value: creates fake value_as_number for demoing
+
+    2019-11-28
+    SQL query on star for reference
+    -- converting to using live from omop_live for visit info
+    select
+    pf.encounter,     
+        
+    pp.parent_fact pp_parent_fact_id,
+    pf.fact_type attr_id_pf,
+    att_pf.short_name short_name_pf,
+    pf.parent_fact pf_parent_fact_id,
+    pf.stored_from pf_stored_from,
+    pf.valid_from pf_valid_from,
+
+    pp.property_id,
+    pp.attribute attr_pp,
+    att_pp.short_name short_name_pp,
+    pp.stored_from pp_stored_from,
+    pp.valid_from pp_valid_from,
+
+    pp.value_as_string,
+    pp.value_as_datetime,
+    pp.value_as_integer,
+    pp.value_as_boolean,
+    pp.value_as_attribute
+
+    -- start from property and join out else v slow 
+    from live.patient_property pp 
+    left join live.patient_fact pf
+    on pp.parent_fact = pf.fact_id
+    left join live.attribute att_pf
+    on pf.fact_type = att_pf.attribute_id
+    left join live.attribute att_pp
+    on pp.attribute = att_pp.attribute_id 
+    WHERE
+    pf.fact_type IN (6,7,8,9)
+    AND
+        pf.valid_until IS NULL
+    AND 
+        pp.valid_until IS NULL
+    AND 
+        pf.stored_from > CURRENT_TIMESTAMP - INTERVAL '6 HOUR' 
+    order by pp.stored_from desc;
+    """
+
+    # Convert all ids to integers
+    df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
+    # Drop unnecssary columns
+    df = df[['encounter', 'pp_parent_fact_id', 'property_id', 'short_name_pp', 'value_as_datetime', 'value_as_string']]
+    # Melt -> now becomes pivot because data is already long
+    df1 = df.set_index(['encounter', 'pp_parent_fact_id'])
+    # this seems v slow but it's the only way I can get this to work
+    df2 = df.pivot_table(
+        index=['encounter', 'pp_parent_fact_id'],
+        columns='short_name_pp',
+        values='value_as_string',
+        aggfunc='first'
+    )
+    df = df2.merge(df1, left_index=True, right_index=True)
+    df = df.reset_index()
+    df = df[['encounter', 'pp_parent_fact_id', 'short_name_pp', 'LOCATION', 'value_as_datetime']]
+    df = df.rename({
+        'encounter': 'visit_occurrence_id',
+        'short_name_pp': 'event',
+        'value_as_datetime': 'timestamp',
+        'LOCATION': 'care_site_name'
+    }, axis=1)
+
+    # drop LOCATION rows
+    df = df[df['event'] != 'LOCATION']
+
+    # rename values in event column
+    mask = (df['event'] == "ARRIVAL_TIME")
+    df.loc[mask,'event']
+    df.loc[mask,'event'] = 'visit_start_datetime'
+
+    mask = (df['event'] == "DISCH_TIME")
+    df.loc[mask,'event']
+    df.loc[mask,'event'] = 'visit_end_datetime'
+
+    # TODO better way to track patients across bed moves
+    # create a person_id so that we can update the correct dots
+    # the following is nice but won't work b/c it is per query so just reproduce visit_occurrence_id
+    # df['person_id'] = df.groupby('visit_occurrence_id').ngroup()
+    df['person_id'] = df['visit_occurrence_id']
+
+    # Identify the last visit_end_datetime in each visit_occurrence
+    # TODO better error checking here: am assuming that every end = preceding start hence all trnasitions are perfect
+    # Need a 'step' indicator by visit_occurence then delete all end times except for the last
+    df = df.sort_values(by=["person_id", "visit_occurrence_id", "timestamp"])
+    df['detail_i'] = df.groupby(["person_id", "visit_occurrence_id"]).cumcount()+1
+    # now create a max indicator
+    df['detail_i_max'] = df.groupby(["person_id", "visit_occurrence_id"])['detail_i'].transform(max)
+
+    # now drop where visit_end_datetime unless detail_i = detail_i_max
+    df = df[ (df.event == 'visit_start_datetime') |
+        ((df.event == 'visit_end_datetime') & (df.detail_i == df.detail_i_max))]
+
+    # Drop unnecessary columns
+    df = df[['person_id', 'visit_occurrence_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
 
     if fake_value:
         df['value_as_number'] = np.random.random(df.shape[0])*200   
