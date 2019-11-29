@@ -61,6 +61,7 @@ const groups = {
     "PAEDS": { x: middle_col, y: bottom_row, color: "#BEE5AA", cnt: 0, fullname: "PAEDS" },
 };
 
+
 const connection = new WebSocket(WEBSOCKET_SERVER);
 // debugging : temporary empty connection to avoid page errors
 // var connection = function () {};
@@ -116,15 +117,13 @@ function updatePts(msg, pts) {
         // console.log(pts[pts_index]);
 
     };
-    // console.log(pts)
-    // commenting out because ...
-    // don't do the update when the message arrives; use the tick instead
-    // updateViz();
+    // TODO add in logic to remove patients from the array
 }
 
 function updateViz (update_speed=500) {
     console.log("Updating viz ...");
 
+    // use the window namespace to access the svg from within the function
     svg = window.svg1
     //
     t = svg.transition().duration(update_speed).ease(i => i);
@@ -300,3 +299,60 @@ function tick() {
     svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
 }
 
+
+// Force to increment nodes to groups.
+function forceCluster() {
+  const strength = .15;
+  let nodes;
+
+  function force(alpha) {
+    const l = alpha * strength;
+    for (const d of nodes) {
+      d.vx -= (d.x - groups[d.group].x) * l;
+      d.vy -= (d.y - groups[d.group].y) * l;
+    }
+  }
+  force.initialize = _ => nodes = _;
+
+  return force;
+}
+
+
+
+// Force for collision detection.
+function forceCollide() {
+  const alpha = 0.2; // fixed for greater rigidity!
+  const padding1 = padding; // separation between same-color nodes
+  const padding2 = cluster_padding; // separation between different-color nodes
+  let nodes;
+  let maxRadius;
+
+  function force() {
+    const quadtree = d3.quadtree(nodes, d => d.x, d => d.y);
+    for (const d of nodes) {
+      const r = d.r + maxRadius;
+      const nx1 = d.x - r, ny1 = d.y - r;
+      const nx2 = d.x + r, ny2 = d.y + r;
+
+      quadtree.visit((q, x1, y1, x2, y2) => {
+      
+        if (!q.length) do {
+          if (q.data !== d) {
+            const r = d.r + q.data.r + (d.group === q.data.group ? padding1 : padding2);
+            let x = d.x - q.data.x, y = d.y - q.data.y, l = Math.hypot(x, y);
+            if (l < r) {
+              l = (l - r) / l * alpha;
+              d.x -= x *= l, d.y -= y *= l;
+              q.data.x += x, q.data.y += y;
+            }
+          }
+        } while (q = q.next);
+        return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+      });
+    }
+  }
+
+  force.initialize = _ => maxRadius = d3.max(nodes = _, d => d.r) + Math.max(padding1, padding2);
+
+  return force;
+}

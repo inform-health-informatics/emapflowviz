@@ -61,10 +61,14 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
     # await websocket.send_text()
-    await websocket.send_json({"foo": cfg.DB_HOST})
+    # TODO place logic here for initial load before opening the loop
+    # e.g.
+    # await websocket.send_json(INITIAL_PATIENT_POSITION_ARRAY)
+    # then allow some time to lapse for the initial load before moving on in real time
+    # send a flag to the page that you're about to switch the realtime load
+    # await websocket.send_json({"REALTIME_LOOP_OPEN": true})
 
     try:
-        # NOTE these variables are not seen if they are declared outside of the function
         while TIME_NOW < TIME_ENDS:
 
             # now update times for next iteration of the loop
@@ -99,6 +103,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 print(">>>: No ward movements: skipping forward one TIME_DELTA")
                 continue
 
+            # create a group indicator (from room slug)
+            df['group'] = df['slug_room']
+
             await websocket.send_json({
                 "n_events": df.shape[0],
                 "time_then": str(TIME_THEN),
@@ -113,11 +120,11 @@ async def websocket_endpoint(websocket: WebSocket):
     except AttributeError as err:
         # try to capture error and end gracefully when there is no more data
         print("!!! No more data?", err)
-        # print("Closing connection to PostgreSQL")
-        # curs.close()
-        # conn.close()
-    # finally:
-    # await websocket.close()
+    finally:
+        print("Closing connection to PostgreSQL")
+        curs.close()
+        conn.close()
+        await websocket.close()
 
 
 routes = [
