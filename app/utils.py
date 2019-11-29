@@ -145,7 +145,8 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     left join live.attribute att_pp
     on pp.attribute = att_pp.attribute_id 
     WHERE
-    pf.fact_type IN (6,7,8,9)
+    -- include 5 for hospital visit
+    pf.fact_type IN (5,6,7,8,9)
     AND
         pf.valid_until IS NULL
     AND 
@@ -154,6 +155,28 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
         pf.stored_from > CURRENT_TIMESTAMP - INTERVAL '6 HOUR' 
     order by pp.stored_from desc;
     """
+    # Convert all ids to integers
+    df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
+
+    # Sort out hospital visits first
+    # ==============================
+    dfh = df[df['short_name_pf'] == 'HOSP_VISIT']
+    # now cast wide and see what open visits you have
+    dfh = dfh.pivot(
+        index='encounter',
+        columns='short_name_pp',
+        values='value_as_datetime'
+    )
+    dfh = dfh.rename({
+        'ARRIVAL_TIME': 'hosp_visit_start',
+        'DISCH_TIME': 'hosp_visit_end',
+        'encounter': 'visit_occurrence_id'
+    }, axis=1)
+
+    # Now sort out bed visits
+    # =======================
+    # df becomes just bed visits
+    df = df[df['short_name_pf'] == 'BED_VISIT']
 
     # Convert all ids to integers
     df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
@@ -220,6 +243,9 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     # df['timestamp_str'] = df['timestamp'].apply(lambda x: x.to_datetime(utc=True))
     # this is hacky but it works; everything else above fails
     df['timestamp_str'] = df['timestamp'].apply(lambda x: str(x))
+
+    # Now join back on hospital visits
+    df = df.merge(dfh, left_on='visit_occurrence_id', right_on='encounter')
 
     if fake_value:
         df['value_as_number'] = np.random.random(df.shape[0])*200   
