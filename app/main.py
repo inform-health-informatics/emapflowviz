@@ -121,10 +121,11 @@ async def websocket_endpoint(websocket: WebSocket):
         # try to capture error and end gracefully when there is no more data
         print("!!! No more data?", err)
     finally:
-        print("Closing connection to PostgreSQL")
-        curs.close()
-        conn.close()
-        await websocket.close()
+        # print("Closing connection to PostgreSQL")
+        # curs.close()
+        # conn.close()
+        # await websocket.close()
+        pass
 
 
 routes = [

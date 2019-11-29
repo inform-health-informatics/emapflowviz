@@ -16,7 +16,6 @@ const margin = {top: 40, right: 40, bottom: 40, left: 40},
     width = innerWidth - padding.left - padding.right,
     height = innerHeight - padding.top - padding.bottom;
 
-d3.select("#svg1").style("width", (width+margin.left+margin.right)+"px");
 
 // node parameters (for groups above)
 const radius = 5,
@@ -62,37 +61,21 @@ const groups = {
 };
 
 
-const connection = new WebSocket(WEBSOCKET_SERVER);
-// debugging : temporary empty connection to avoid page errors
-// var connection = function () {};
-connection.onopen = function() {
-    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
-}
-
-connection.onclose = function() {
-    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
-}
-
-connection.onmessage = function(event) {
-    // function should update the data that d3 accesses
-    let newData = JSON.parse(
-        JSON.parse(event.data)
-        );
-    console.log(newData);
-
-    // pts.push(newData);
-    updatePts(newData, pts);
-    updateTable();
-    updateViz();
-
-    value_as_number = newData.value_as_number;
-    // console.log(value_as_number);
-}
+// ============================================================================
+// Functions
+// ============================================================================
 
 function updatePts(msg, pts) {
     // push or update patient's current position
     // first insert a modifed timestamp into the msg
     msg.modified_at = Date.now();
+
+    // console.log(groups[msg.group])
+    // console.log(groups[msg.group].x)
+    // console.log(groups[msg.group].y)
+    // msg.xx = groups[msg.group].x + Math.random()
+    // msg.yy = groups[msg.group].y + Math.random()
+    // console.log(msg)
     // alert(msg);
 
     // prove that you can see the new data
@@ -200,11 +183,41 @@ function updateTable () {
             .append("td")
             .text(function(d) { return (d); }) // ;
 }
+// ============================================================================
+// WEBSOCKETS
+// ============================================================================
+
+const connection = new WebSocket(WEBSOCKET_SERVER);
+connection.onopen = function() {
+    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onclose = function() {
+    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onmessage = function(event) {
+    // function should update the data that d3 accesses
+    let newData = JSON.parse(
+        JSON.parse(event.data)
+        );
+    // console.log(newData);
+
+    // pts.push(newData);
+    updatePts(newData, pts);
+    updateTable();
+    updateViz();
+
+    value_as_number = newData.value_as_number;
+    // console.log(value_as_number);
+}
 
 // =================================================================
-// the d3 functions need to run in here else there is nothing to see
+// Build d3 functions 
 // =================================================================
-window.onload = function main () {
+
+// set up the initial svg object
+d3.select("#svg1").style("width", (width+margin.left+margin.right)+"px");
 // D3 set-up
 // this function initially draws the viz
     
@@ -228,6 +241,23 @@ svg1.selectAll('.grp')
     .attr("x", d => groups[d].x)
     .attr("y", d => groups[d].y+30)
     .text(d => groups[d].fullname);
+
+// Forces
+// const simulation = d3.forceSimulation(pts)
+// .force("x", d => d3.forceX(d.x))
+// .force("y", d => d3.forceY(d.y))
+// .force("cluster", forceCluster())
+// .force("collide", forceCollide())
+// .alpha(.09)
+// .alphaDecay(0);
+
+// // Adjust position of circles.
+// simulation.on("tick", () => {    
+// circle
+//     .attr("cx", d => d.x)
+//     .attr("cy", d => d.y)
+//     .attr("fill", d => groups[d.group].color);
+// });
 
 // Group counts
 svg1.selectAll('.grpcnt')
@@ -274,9 +304,6 @@ g2.append("g")
     .ease(d3.easeLinear)
     .on("start", tick);
 
-}
-// end main
-console.log("end main: so far so good");
 
 function tick() {
     // this runs the animation and defines what happens with each browser frame refresh
@@ -299,6 +326,9 @@ function tick() {
     svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
 }
 
+// ============================================================================
+// FORCES
+// ============================================================================
 
 // Force to increment nodes to groups.
 function forceCluster() {
