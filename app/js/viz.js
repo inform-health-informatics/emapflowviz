@@ -117,9 +117,11 @@ stages.then(function(data) {
     
     // cs for each node.
     const cs = svg.append("g")
+        .attr("id", "bubbles")
         .selectAll("circle")
         .data(nodes)
         .join("circle")
+          .attr("id", d => d.person_id)
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("fill", d => d.color);
@@ -188,14 +190,21 @@ stages.then(function(data) {
             // console.log(nodes);
             // TODO make this function run asynchronously
             svg
+            .select("#bubbles")
             .selectAll("circle")
-            .data(nodes, d => d.id_node)
+            .data(nodes, d => d.person_id)
             .join(
-                enter => enter .append("circle"),
+                enter => enter .append("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    .attr("r", d => d.r)
+                    .attr("fill", d => d.color),
                 update => update,
                 exit => exit.remove()
             );
 
+            simulation.nodes(nodes);
+            simulation.restart();
         };
         
         nodes.forEach(function(o,i) {
@@ -326,7 +335,7 @@ connection.onmessage = function(event) {
     let d = JSON.parse(
         JSON.parse(event.data)
         );
-    console.log(d);
+    // console.log(d);
     d.modified_at = Date.now();
     msgs.push(d);
 
@@ -341,6 +350,7 @@ connection.onmessage = function(event) {
     if (nodes_idx === -1) {
         people[d.person_id+""] = [d];
         console.log('new patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
+        // d.color='white';
         d.grp='NEWBIE';
         console.log(d.person_id);
         console.log(make_node_from_people(d.person_id));
