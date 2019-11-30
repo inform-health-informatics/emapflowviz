@@ -13,12 +13,14 @@ DB_USER = config("DB_USER", cast=str)
 WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
 
 # Locally declared variables
-DEBUG=False
+DEBUG=True
 STAR_OR_OMOP="STAR"  # config to define which DB to use
 
 # STAR_OR_OMOP="OMOP"
-SIM_SPEED_SECS = 2
-TIME_START = datetime.datetime(2019, 11, 27, 19)
+# SIM_ SPEED_SECS is the delay between SQL queries and updates
+# Each message then gets loaded 10x faster
+SIM_SPEED_SECS = 15
+TIME_START = datetime.datetime(2019, 5, 27, 19)
 TIME_ENDS = datetime.datetime(2019, 11, 29, 19)
 TIME_NOW = TIME_START
 TIME_DELTA = datetime.timedelta(hours=1)

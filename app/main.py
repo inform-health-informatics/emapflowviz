@@ -114,7 +114,7 @@ async def websocket_endpoint(websocket: WebSocket):
             for index, row in df.iterrows():
                 event = row.to_json()
                 await websocket.send_json(event)
-                await asyncio.sleep(SIM_SPEED_SECS/10)
+                await asyncio.sleep(SIM_SPEED_SECS/5)
             await asyncio.sleep(SIM_SPEED_SECS)
 
     except AttributeError as err:

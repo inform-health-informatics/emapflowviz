@@ -50,14 +50,14 @@ let middle_col = width*2/4
 let right_col = width*3/4
 
 const groups = {
-    "TRIAGE": { x: middle_col, y: middle_row, color: "#FAF49A", cnt: 0, fullname: "TRIAGE" },
+    "TRIAGE": { x: middle_col, y: middle_row, color: "blue", cnt: 0, fullname: "TRIAGE" },
     "DIAGNOSTICS": { x: middle_col, y: top_row, color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
-    "UTC": { x: left_col, y: top_row, color: "#BEE5AA", cnt: 0, fullname: "UTC" },
-    "RAT": { x: left_col, y: middle_row, color: "#BEE5AA", cnt: 0, fullname: "RAT" },
-    "MAJORS": { x: right_col, y: middle_row, color: "#93D1BA", cnt: 0, fullname: "MAJORS" },
-    "RESUS": { x: right_col, y: bottom_row, color: "#79BACE", cnt: 0, fullname: "RESUS" },
-    "OTHER": { x: left_col, y: bottom_row, color: "#FAF49A", cnt: 0, fullname: "OTHER" },
-    "PAEDS": { x: middle_col, y: bottom_row, color: "#BEE5AA", cnt: 0, fullname: "PAEDS" },
+    "UTC": { x: left_col, y: top_row, color: "purple", cnt: 0, fullname: "UTC" },
+    "RAT": { x: left_col, y: middle_row, color: "black", cnt: 0, fullname: "RAT" },
+    "MAJORS": { x: right_col, y: middle_row, color: "red", cnt: 0, fullname: "MAJORS" },
+    "RESUS": { x: right_col, y: bottom_row, color: "red", cnt: 0, fullname: "RESUS" },
+    "OTHER": { x: left_col, y: bottom_row, color: "green", cnt: 0, fullname: "OTHER" },
+    "PAEDS": { x: middle_col, y: bottom_row, color: "pink", cnt: 0, fullname: "PAEDS" },
 };
 
 
@@ -70,34 +70,18 @@ function updatePts(msg, pts) {
     // first insert a modifed timestamp into the msg
     msg.modified_at = Date.now();
 
-    // console.log(groups[msg.group])
-    // console.log(groups[msg.group].x)
-    // console.log(groups[msg.group].y)
-    // msg.xx = groups[msg.group].x + Math.random()
-    // msg.yy = groups[msg.group].y + Math.random()
-    // console.log(msg)
-    // alert(msg);
-
-    // prove that you can see the new data
-    // console.log("data to update");
-    console.log('sfsg: updatePts running');
-
     // TODO generalise this since it depends on the data
-    // you should add in a key to the function arguments
     // return index of patient if already in array else -1
-    let pts_index = pts.findIndex( i => {return i.visit_occurrence_id === msg.visit_occurrence_id;});
+    let pts_index = pts.findIndex( i => {return i.person_id === msg.person_id;});
     // push new patient or splice (delete and insert) as necessary
     if (pts_index === -1) {
-        console.log('new patient: ' + msg.visit_occurrence_id + '; n pts = '+ pts.length);
+        console.log('new patient: ' + msg.person_id + '; n pts = '+ pts.length);
         console.log('room_slug: ' + msg.slug_room)
         pts.push(msg);
     } else {
-        console.log('old patient: ' + msg.visit_occurrence_id + '; n pts = '+ pts.length);
+        console.log('old patient: ' + msg.person_id + '; n pts = '+ pts.length);
         console.log('room_slug: ' + msg.slug_room)
-        // console.log(pts[pts_index]);
         pts.splice(pts_index, 1, msg);
-        // console.log('new patient');
-        // console.log(pts[pts_index]);
 
     };
     // TODO add in logic to remove patients from the array
@@ -107,31 +91,33 @@ function updateViz (update_speed=500) {
     console.log("Updating viz ...");
 
     // use the window namespace to access the svg from within the function
-    svg = window.svg1
+    svg = svg1
     //
     t = svg.transition().duration(update_speed).ease(i => i);
 
     
     cs = svg.selectAll( "circle" )
-        .data(pts, function(d) {return d.name;})
+        .data(pts, function(d) {return d.person_id;})
         .join(
             enter => enter.append("circle")
-                .attr( "fill", "green" ) 
-                    .attr( "cx", d=>groups[d.slug_room].x + Math.random())
-                    .attr( "cy", d=>groups[d.slug_room].y + Math.random())
+                .attr( "fill", d=>groups[d.group].color) 
+                    .attr( "id", d=>d.person_id)
+                    .attr( "cx", d=>groups[d.group].x + Math.random())
+                    .attr( "cy", d=>groups[d.group].y + Math.random())
                 // .call(update => update.transition(t)
-                //     .attr( "cx", d=>groups[d.slug_room].x + Math.random())
-                //     .attr( "cy", d=>groups[d.slug_room].y + Math.random())
+                //     .attr( "cx", d=>groups[d.group].x + Math.random())
+                //     .attr( "cy", d=>groups[d.group].y + Math.random())
                 // ),
                 ,
             update => update
-                .attr( "fill", "blue" ) 
+                .attr( "fill", d=>groups[d.group].color ) 
                 .call(update => update.transition(t)
-                    .attr( "cx", d=>groups[d.slug_room].x + Math.random())
-                    .attr( "cy", d=>groups[d.slug_room].y + Math.random())
-                ),
+                    .attr( "cx", d=>groups[d.group].x)
+                    .attr( "cy", d=>groups[d.group].y)
+                )
+                ,
             exit => exit
-                .attr( "fill", "red" ) 
+                .attr( "fill", d=>groups[d.group].color ) 
                 .call(
                     exit => exit.transition(t)
                     )
@@ -139,6 +125,13 @@ function updateViz (update_speed=500) {
         )
             .attr( "r",  d=>radius )
             .attr( "opacity", "0.1" );
+
+        simulation = d3.forceSimulation(pts)
+            .force("x", d => d3.forceX(d.x))
+            .force("y", d => d3.forceY(d.y))
+            .force("cluster", forceCluster())
+            .force("collide", forceCollide())
+            .alpha(.09);
 
 }
 
@@ -215,34 +208,61 @@ connection.onmessage = function(event) {
 // =================================================================
 // Build d3 functions 
 // =================================================================
+// First SVG SVG1
+// =================================================================
 
 // set up the initial svg object
 d3.select("#svg1").style("width", (width+margin.left+margin.right)+"px");
 // D3 set-up
 // this function initially draws the viz
-    
+
 // table inspect : 2nd div on page
 d3.select("#viz_inspect")
     .append("table");
 
 // main viz set up
-window.svg1 = d3.select("#viz1").append("svg")
+svg1 = d3.select("#viz1").append("svg")
     .attr("width", outerWidth)
     .attr("height", outerHeight)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-// Group name labels
-svg1.selectAll('.grp')
-.data(d3.keys(groups))
-.join("text")
-    .attr("class", "grp")
-    .attr("text-anchor", "middle")
-    .attr("x", d => groups[d].x)
-    .attr("y", d => groups[d].y+30)
-    .text(d => groups[d].fullname);
+var cs = svg1.append("g")
+    .selectAll("circle")
+    .data(pts)
+    .join("circle")
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y)
+    .attr("fill", d => d.color);
 
+// Ease in the circles.
+cs.transition()
+    .delay((d, i) => i * 5)
+    .duration(800)
+    .attrTween("r", d => {
+    const i = d3.interpolate(0, d.r);
+    return t => d.r = i(t);
+    });
+    
 // Forces
+var simulation = d3.forceSimulation(pts)
+    .force("x", d => d3.forceX(d.x*10))
+    .force("y", d => d3.forceY(d.y*100))
+    .force("charge", d3.forceManyBody().strength(-60))
+    // .force("cluster", forceCluster())
+    // .force("collide", forceCollide())
+    .alpha(.09)
+    .alphaDecay(0.1);
+
+simulation.on("tick", function() {
+    cs
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("fill", d => groups[d.group].color);
+
+});
+
+
 // const simulation = d3.forceSimulation(pts)
 // .force("x", d => d3.forceX(d.x))
 // .force("y", d => d3.forceY(d.y))
@@ -259,15 +279,30 @@ svg1.selectAll('.grp')
 //     .attr("fill", d => groups[d.group].color);
 // });
 
+// Group name labels
+svg1.selectAll('.grp')
+.data(d3.keys(groups))
+.join("text")
+    .attr("class", "grp")
+    .attr("text-anchor", "middle")
+    .attr("x", d => groups[d].x)
+    .attr("y", d => groups[d].y+30)
+    .text(d => groups[d].fullname);
+
+
 // Group counts
-svg1.selectAll('.grpcnt')
-    .data(d3.keys(groups))
-    .join("text")
-        .attr("class", "grpcnt")
-        .attr("text-anchor", "middle")
-        .attr("x", d => groups[d].x)
-        .attr("y", d => groups[d].y+50)
-        .text(d => groups[d].cnt);
+// svg1.selectAll('.grpcnt')
+//     .data(d3.keys(groups))
+//     .join("text")
+//         .attr("class", "grpcnt")
+//         .attr("text-anchor", "middle")
+//         .attr("x", d => groups[d].x)
+//         .attr("y", d => groups[d].y+50)
+//         .text(d => groups[d].cnt);
+
+// =================================================================
+// Second SVG SVG2
+// =================================================================
 
 // set up svg to hold viz with margin transform
 const svg2 = d3.select("#viz2").append("svg")
@@ -305,34 +340,35 @@ g2.append("g")
     .on("start", tick);
 
 
-function tick() {
-    // this runs the animation and defines what happens with each browser frame refresh
-    // Push a new data point onto the back.
+// function tick() {
+//     // this runs the animation and defines what happens with each browser frame refresh
+//     // Push a new data point onto the back.
 
-    data.push(value_as_number);
-    // data.push(random());
-    // Redraw the line.
-    d3.select(this)
-        .attr("d", line)
-        .attr("transform", null);
-    // Slide it to the left.
-    d3.active(this)
-        .attr("transform", "translate(" + x(-1) + ",0)")
-        .transition()
-        .on("start", tick);
-    // Pop the old data point off the front.
-    data.shift();
+//     data.push(value_as_number);
+//     // data.push(random());
+//     // Redraw the line.
+//     d3.select(this)
+//         .attr("d", line)
+//         .attr("transform", null);
+//     // Slide it to the left.
+//     d3.active(this)
+//         .attr("transform", "translate(" + x(-1) + ",0)")
+//         .transition()
+//         .on("start", tick);
+//     // Pop the old data point off the front.
+//     data.shift();
 
-    svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
-}
+//     svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
+// }
 
 // ============================================================================
 // FORCES
 // ============================================================================
 
+
 // Force to increment nodes to groups.
 function forceCluster() {
-  const strength = .15;
+  const strength = .55;
   let nodes;
 
   function force(alpha) {
