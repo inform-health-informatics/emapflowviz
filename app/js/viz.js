@@ -1,5 +1,7 @@
 const people = {};
-let time_so_far = Date.now();
+let time_so_far = 0;
+const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
 
 // Node size and spacing.
 const radius = 5,
@@ -150,8 +152,16 @@ stages.then(function(data) {
         });
         
         // Increment time.
-        // time_so_far += 1;
-        d3.select("#timecount .cnt").text(Date.now());
+        time_so_far += 1;
+        d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
+        // d3.select("#timenow .cnt").text(Date.now().toLocaleString(
+        //     'en-GB', {
+        //         year: 'numeric',
+        //         month: '2-digit',
+        //         day: '2-digit'
+        //     }
+        // ));
+        d3.select("#timecount .cnt").text(time_so_far);
         
         // Update counters.
         svg.selectAll('.grpcnt').text(d => groups[d].cnt);

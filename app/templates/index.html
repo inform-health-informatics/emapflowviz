@@ -10,8 +10,16 @@
     <script> var WEBSOCKET_SERVER = "{{ WEBSOCKET_SERVER }}"; console.log(WEBSOCKET_SERVER); </script>
 </head>
 <body>
+    <div id="main-wrapper">
+    
+        <p id="timecount">Time so far: <span class="cnt"></span></p>
+        <p id="timenow">Time now: <span class="cnt"></span></p>
+        <div id="chart"></div>
+    
+    </div>
     <p>Flowing data version</p>
-    <div id="chart"></div>
+    <!-- <h1 id="timecount">Time now: <span class="cnt"></span></h2 -->
+    <!-- <div id="chart"></div> -->
     <p>Live patient movement in ED</p>
     <div id="viz1"></div>
     <p>Data inspector</p>
