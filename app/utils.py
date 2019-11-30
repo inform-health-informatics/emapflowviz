@@ -36,6 +36,21 @@ def make_postgres_conn(cfg, debug=False):
         password=cfg.DB_PASSWORD
     )
 
+def visits_lengthen_and_label(df, STAR_OR_OMOP):
+    """
+    convert df produced from raw SQL to long form
+    then label by merging with care_site_clean to get ward/bed/room
+    """
+    if STAR_OR_OMOP == 'OMOP':
+        df = omop_visit_detail_to_long(df, fake_value=True)
+        df = join_visit_detail_to_care_site_clean(df)
+    elif STAR_OR_OMOP == 'STAR':
+        df = star_visits_to_long(df, fake_value=True)
+        df = join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
+    else:
+        print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
+        sys.exit(1)
+    return df
 
 def join_visit_detail_to_care_site_clean(
         df: pd.DataFrame,

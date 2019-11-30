@@ -20,6 +20,7 @@ STAR_OR_OMOP="STAR"  # config to define which DB to use
 # SIM_ SPEED_SECS is the delay between SQL queries and updates
 # Each message then gets loaded 10x faster
 SIM_SPEED_SECS = 15
+TIME_ZERO = datetime.datetime(2019, 5, 25, 19)
 TIME_START = datetime.datetime(2019, 5, 27, 19)
 TIME_ENDS = datetime.datetime(2019, 11, 29, 19)
 TIME_NOW = TIME_START

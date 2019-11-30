@@ -1,6 +1,7 @@
 # Steve Harris
 # 2019-11-22 : app to serve d3 viz in realtime for EMAP
 
+
 # Imports: standard library
 import asyncio  # e.g. asyncio.sleep preferred else the event loop blocks
 import datetime
@@ -35,11 +36,24 @@ templates = Jinja2Templates(directory="/app/templates")
 conn = utils.make_postgres_conn(cfg)
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
+# Initial data load
+SQL = sql.SQL(cfg.SQL_STRING.format(cfg.TIME_ZERO, cfg.TIME_NOW))
+df_pts_initial = pd.read_sql(SQL, conn)
+# df_pts_initial = pd.DataFrame({"foo": [0,1], "bar":[2,3]})
+df_pts_initial = utils.visits_lengthen_and_label(df_pts_initial, cfg.STAR_OR_OMOP)
+df_pts_initial = utils.filter_visit_detail_long(df_pts_initial, column='ward', inclusions=['ED'])
+df_pts_initial.to_csv('static/data/pts_initial.csv')
 
 async def homepage(request):
     print(">>> homepage route called")
+    # TODO assemble and send initial data set to the page
+
     return templates.TemplateResponse(
-        "index.html", {"request": request, "WEBSOCKET_SERVER": cfg.WEBSOCKET_SERVER}
+        "index.html", {
+        "request": request,
+        "WEBSOCKET_SERVER": cfg.WEBSOCKET_SERVER} 
+        # "DF_PTS_INITIAL": df_pts_initial.to_json(orient="records")}
+        # "DF_PTS_INITIAL": df_pts_initial.to_csv()}
     )
 
 
@@ -83,15 +97,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # TODO need some logic to handle empty or unhelpful queries
             try:
-                if STAR_OR_OMOP == 'OMOP':
-                    df = utils.omop_visit_detail_to_long(df, fake_value=True)
-                    df = utils.join_visit_detail_to_care_site_clean(df)
-                elif STAR_OR_OMOP == 'STAR':
-                    df = utils.star_visits_to_long(df, fake_value=True)
-                    df = utils.join_visit_detail_to_care_site_clean(df, join_on="care_site_name")
-                else:
-                    print("!!!: INVALID CONFIGURATION for STAR_OR_OMOP: only START or OMOP are valid choices")
-                    sys.exit(1)
+                df = utils.visits_lengthen_and_label(df, STAR_OR_OMOP)
             except KeyError as e:
                 # KeyError raised when LOCATION not in index 
                 print(f"!!!: Error on database query: {e}")
