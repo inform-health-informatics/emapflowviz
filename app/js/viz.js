@@ -1,5 +1,10 @@
 const people = {};
 let time_so_far = 0;
+let time_sim;
+let earliest_bed_visit;
+const n_discharges = 0;
+
+
 const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
 const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
 
@@ -33,14 +38,16 @@ let middle_col = width*2/4
 let right_col = width*3/4
 
 const groups = {
-    "TRIAGE": { x: middle_col, y: middle_row, color: "blue", cnt: 0, fullname: "TRIAGE" },
+    "TRIAGE": { x: middle_col, y: middle_row, color: "green", cnt: 0, fullname: "TRIAGE" },
     "DIAGNOSTICS": { x: middle_col, y: top_row, color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
     "UTC": { x: left_col, y: top_row, color: "purple", cnt: 0, fullname: "UTC" },
-    "RAT": { x: left_col, y: middle_row, color: "black", cnt: 0, fullname: "RAT" },
+    "RAT": { x: left_col, y: middle_row, color: "blue", cnt: 0, fullname: "RAT" },
     "MAJORS": { x: right_col, y: middle_row, color: "red", cnt: 0, fullname: "MAJORS" },
     "RESUS": { x: right_col, y: bottom_row, color: "red", cnt: 0, fullname: "RESUS" },
-    "OTHER": { x: left_col, y: bottom_row, color: "green", cnt: 0, fullname: "OTHER" },
+    "OTHER": { x: left_col, y: bottom_row, color: "orange", cnt: 0, fullname: "OTHER" },
     "PAEDS": { x: middle_col, y: bottom_row, color: "pink", cnt: 0, fullname: "PAEDS" },
+    // HOSP visit ended
+    "DC": { x: right_col+100 , y: middle_row, color: "black", cnt: 0, fullname: "DC" },
 };
 
 // Load data.
@@ -50,8 +57,16 @@ const groups = {
 const stages = d3.csv("static/data/pts_initial.csv");
 
 
+
 // Once data is loaded...
 stages.then(function(data) {
+    
+    // Define when sim starts based on the earliest time in the data
+    earliest_bed_visit = d3.min(data, function(d) {
+        return Date.parse(d.bed_visit_start);
+      });
+    console.log(earliest_bed_visit);
+    time_sim = earliest_bed_visit;
     
     // Consolidate stages by pid. (person_id)
     // The data file is one row per stage change.
@@ -78,9 +93,13 @@ stages.then(function(data) {
             group: people[d][0].grp,
             timeleft: people[d][0].bed_los,
             istage: 0,
-            stages: people[d]
+            stages: people[d],
+            hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
+            hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
         }
     });
+    // to permit inspection during debugging
+    window.nodes_inspect = nodes;
     
     
     // Circle for each node.
@@ -140,6 +159,8 @@ stages.then(function(data) {
             .attr("cx", d => d.x)
             .attr("cy", d => d.y)
             .attr("fill", d => groups[d.group].color);
+        // circle
+        //     .attr("fill", "blue");
         });
     
     
@@ -161,19 +182,41 @@ stages.then(function(data) {
                 
                 // Increment counter for new group.
                 groups[o.group].cnt += 1;
+            };
+            if (time_sim > o.hosp_visit_end & o.group != "DC") {
+                groups[o.group].cnt -= 1;
+                o.group = "DC";
+                groups[o.group].cnt += 1;
+                console.log(o.id + " has left the building");
+                
             }
         });
+
+//         circle.selectAll("circle")
+//         .data(nodes, function(d) {return d.id;})
+//         .join(
+//             enter => enter.append("circle")
+//                 // .attr( "fill", d=>groups[d.grp].color) 
+//                     // .attr( "id", d=>d.person_id)
+//                     // .attr( "cx", d=>groups[d.grp].x + Math.random())
+//                     // .attr( "cy", d=>groups[d.grp].y + Math.random())
+//                 ,
+// //             update => update
+// //                 .attr( "fill", d=>groups[d.grp].color ) 
+// //                 .call(update => update.transition(t)
+// //                     .attr( "cx", d=>groups[d.grp].x)
+// //                     .attr( "cy", d=>groups[d.grp].y)
+// //                 )
+//             exit => exit
+//                 .attr( "fill", "green" ) 
+//                 .remove()
+//         );
         
         // Increment time.
         time_so_far += 1;
-        d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
-        // d3.select("#timenow .cnt").text(Date.now().toLocaleString(
-        //     'en-GB', {
-        //         year: 'numeric',
-        //         month: '2-digit',
-        //         day: '2-digit'
-        //     }
-        // ));
+        time_sim += 60000;
+        d3.select("#timenow .cnt").text(dateTimeFormat.format((time_sim)));
+        // d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
         d3.select("#timecount .cnt").text(time_so_far);
         
         // Update counters.
