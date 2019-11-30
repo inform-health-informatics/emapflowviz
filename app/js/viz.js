@@ -85,7 +85,7 @@ stages.then(function(data) {
         groups[people[d][0].grp].cnt += 1;
         
         return {
-            id: "node"+d,
+            id_node: "node"+d,
             x: groups[people[d][0].grp].x + Math.random(),
             y: groups[people[d][0].grp].y + Math.random(),
             r: radius,
@@ -102,17 +102,19 @@ stages.then(function(data) {
     window.nodes_inspect = nodes;
     
     
-    // Circle for each node.
-    const circle = svg.append("g")
+    // cs for each node.
+    const cs = svg.append("g")
         .selectAll("circle")
         .data(nodes)
         .join("circle")
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("fill", d => d.color);
+    // to permit inspection during debugging
+    window.cs_inspect = cs;
     
     // Ease in the circles.
-    circle.transition()
+    cs.transition()
       .delay((d, i) => i * 5)
       .duration(800)
       .attrTween("r", d => {
@@ -153,13 +155,13 @@ stages.then(function(data) {
         .alpha(.09)
         .alphaDecay(0);
 
-    // Adjust position of circles.
+    // Adjust position of css.
     simulation.on("tick", () => {    
-        circle
+        cs
             .attr("cx", d => d.x)
             .attr("cy", d => d.y)
             .attr("fill", d => groups[d.group].color);
-        // circle
+        // cs
         //     .attr("fill", "blue");
         });
     
@@ -168,6 +170,20 @@ stages.then(function(data) {
     
     // Make time pass. Adjust node stage as necessary.
     function timer() {
+
+        if (time_so_far % 50 === 0) {
+            console.log(nodes);
+            svg
+            .selectAll("circle")
+            .data(nodes, d => d.id_node)
+            .join(
+                enter => enter .append("circle"),
+                update => update,
+                exit => exit.remove()
+            );
+            console.log(cs);
+
+        };
         
         nodes.forEach(function(o,i) {
             o.timeleft -= 1;
@@ -187,30 +203,15 @@ stages.then(function(data) {
                 groups[o.group].cnt -= 1;
                 o.group = "DC";
                 groups[o.group].cnt += 1;
-                console.log(o.id + " has left the building");
+                console.log(o.id_node + " has left the building");
                 
             }
         });
+        nodes = nodes.filter(function(el) { return el.group != "DC"; });
+        // for debugging; gets these local variables visible
+        nodes_inspect = nodes;
+        cs_inspect = cs;
 
-//         circle.selectAll("circle")
-//         .data(nodes, function(d) {return d.id;})
-//         .join(
-//             enter => enter.append("circle")
-//                 // .attr( "fill", d=>groups[d.grp].color) 
-//                     // .attr( "id", d=>d.person_id)
-//                     // .attr( "cx", d=>groups[d.grp].x + Math.random())
-//                     // .attr( "cy", d=>groups[d.grp].y + Math.random())
-//                 ,
-// //             update => update
-// //                 .attr( "fill", d=>groups[d.grp].color ) 
-// //                 .call(update => update.transition(t)
-// //                     .attr( "cx", d=>groups[d.grp].x)
-// //                     .attr( "cy", d=>groups[d.grp].y)
-// //                 )
-//             exit => exit
-//                 .attr( "fill", "green" ) 
-//                 .remove()
-//         );
         
         // Increment time.
         time_so_far += 1;
