@@ -64,3 +64,18 @@ though I note this is not working reliably in omop_live so should construct from
 maybe you could just count fact types as they are stored in star?
 rather than waste time this evening trying to make the connection via the VPN to check; let's just assume that you can with some SQL magic recreate a stream of measurements with timestamps
 see https://bost.ocks.org/mike/path/
+
+
+2019-11-29t091351
+query updated to pull through hospital visit detail too
+need to also create a query that pulls through all _open_ visits (i.e. those without a discharge date); given this will search the entire live data base then need to check that query uses indexes well
+tasks for today 
+- apply forces
+- load and 'play' all existing open patients for the existing time based query
+- logic to exit patients when discharged
+- make counters work
+- radial layout
+
+
+2019-11-30t083950
+trying to go back to the original example with a static data load
