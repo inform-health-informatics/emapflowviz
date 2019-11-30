@@ -22,31 +22,44 @@ const svg = d3.select("#chart").append("svg")
 d3.select("#chart").style("width", (width+margin.left+margin.right)+"px");
 
 
-// Group coordinates and meta info. 
-const groups = {
-    "ED": { x: width/5, y: height/2, color: "#FAF49A", cnt: 0, fullname: "ED" }, 
-	"AMU": { x: 2.5*width/5, y: 1*height/4, color: "#BEE5AA", cnt: 0, fullname: "AMU" },
-    "ICU": { x: 2.5*width/5, y: 3*height/4, color: "#93D1BA", cnt: 0, fullname: "ICU" },
-    "T8": { x: 4*width/5, y: height/2, color: "#79BACE", cnt: 0, fullname: "T8" },
-};
 
+// Group coordinates and meta info.
+// these will be represented as 'nodes'
+let top_row = height*1/4
+let middle_row = height*2/4
+let bottom_row = height*3/4
+let left_col = width*1/4
+let middle_col = width*2/4
+let right_col = width*3/4
+
+const groups = {
+    "TRIAGE": { x: middle_col, y: middle_row, color: "blue", cnt: 0, fullname: "TRIAGE" },
+    "DIAGNOSTICS": { x: middle_col, y: top_row, color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
+    "UTC": { x: left_col, y: top_row, color: "purple", cnt: 0, fullname: "UTC" },
+    "RAT": { x: left_col, y: middle_row, color: "black", cnt: 0, fullname: "RAT" },
+    "MAJORS": { x: right_col, y: middle_row, color: "red", cnt: 0, fullname: "MAJORS" },
+    "RESUS": { x: right_col, y: bottom_row, color: "red", cnt: 0, fullname: "RESUS" },
+    "OTHER": { x: left_col, y: bottom_row, color: "green", cnt: 0, fullname: "OTHER" },
+    "PAEDS": { x: middle_col, y: bottom_row, color: "pink", cnt: 0, fullname: "PAEDS" },
+};
 
 // Load data.
 // const stages = d3.tsv("data/stages.tsv", d3.autoType);
 // const stages = d3.csv("data/stages.csv");
-const stages = d3.csv("static/data/adt4d3.csv");
+// const stages = d3.csv("static/data/adt4d3.csv");
+const stages = d3.csv("static/data/pts_initial.csv");
 
 
 // Once data is loaded...
 stages.then(function(data) {
     
-    // Consolidate stages by pid.
+    // Consolidate stages by pid. (person_id)
     // The data file is one row per stage change.
     data.forEach(d => {
-        if (d3.keys(people).includes(d.pid+"")) {
-            people[d.pid+""].push(d);
+        if (d3.keys(people).includes(d.person_id+"")) {
+            people[d.person_id+""].push(d);
         } else {
-            people[d.pid+""] = [d];
+            people[d.person_id+""] = [d];
         }
     });
     
@@ -63,7 +76,7 @@ stages.then(function(data) {
             r: radius,
             color: groups[people[d][0].grp].color,
             group: people[d][0].grp,
-            timeleft: people[d][0].duration,
+            timeleft: people[d][0].bed_los,
             istage: 0,
             stages: people[d]
         }
@@ -167,7 +180,7 @@ stages.then(function(data) {
         svg.selectAll('.grpcnt').text(d => groups[d].cnt);
         
         // Do it again.
-        d3.timeout(timer, 200);
+        d3.timeout(timer, 20);
         
     } // @end timer()
 

@@ -42,7 +42,7 @@ df_pts_initial = pd.read_sql(SQL, conn)
 # df_pts_initial = pd.DataFrame({"foo": [0,1], "bar":[2,3]})
 df_pts_initial = utils.visits_lengthen_and_label(df_pts_initial, cfg.STAR_OR_OMOP)
 df_pts_initial = utils.filter_visit_detail_long(df_pts_initial, column='ward', inclusions=['ED'])
-df_pts_initial['group'] = df_pts_initial['slug_room']
+df_pts_initial['grp'] = df_pts_initial['slug_room']
 df_pts_initial.to_csv('static/data/pts_initial.csv')
 
 async def homepage(request):
@@ -113,7 +113,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
 
             # create a group indicator (from room slug)
-            df['group'] = df['slug_room']
+            df['grp'] = df['slug_room']
 
             await websocket.send_json({
                 "n_events": df.shape[0],
