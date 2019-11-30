@@ -1,8 +1,11 @@
 const people = {};
+const msgs = [];
 let time_so_far = 0;
 let time_sim;
 let earliest_bed_visit;
 const n_discharges = 0;
+
+console.log(this.WEBSOCKET_SERVER);
 
 
 const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
@@ -50,6 +53,8 @@ const groups = {
     "DC": { x: right_col+100 , y: middle_row, color: "black", cnt: 0, fullname: "DC" },
 };
 
+
+
 // Load data.
 // const stages = d3.tsv("data/stages.tsv", d3.autoType);
 // const stages = d3.csv("data/stages.csv");
@@ -71,6 +76,7 @@ stages.then(function(data) {
     // Consolidate stages by pid. (person_id)
     // The data file is one row per stage change.
     data.forEach(d => {
+        d.modified_at = Date.now();
         if (d3.keys(people).includes(d.person_id+"")) {
             people[d.person_id+""].push(d);
         } else {
@@ -172,7 +178,8 @@ stages.then(function(data) {
     function timer() {
 
         if (time_so_far % 50 === 0) {
-            console.log(nodes);
+            // console.log(nodes);
+            // TODO make this function run asynchronously
             svg
             .selectAll("circle")
             .data(nodes, d => d.id_node)
@@ -181,7 +188,6 @@ stages.then(function(data) {
                 update => update,
                 exit => exit.remove()
             );
-            console.log(cs);
 
         };
         
@@ -203,7 +209,7 @@ stages.then(function(data) {
                 groups[o.group].cnt -= 1;
                 o.group = "DC";
                 groups[o.group].cnt += 1;
-                console.log(o.id_node + " has left the building");
+                // console.log(o.id_node + " has left the building");
                 
             }
         });
@@ -293,4 +299,76 @@ function forceCollide() {
   force.initialize = _ => maxRadius = d3.max(nodes = _, d => d.r) + Math.max(padding1, padding2);
 
   return force;
+}
+
+// ============================================================================
+// WEBSOCKETS
+// ============================================================================
+
+const connection = new WebSocket(WEBSOCKET_SERVER);
+connection.onopen = function() {
+    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onclose = function() {
+    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onmessage = function(event) {
+    // function should update the data that d3 accesses
+    let newData = JSON.parse(
+        JSON.parse(event.data)
+        );
+    console.log(newData);
+    newData.modified_at = Date.now();
+
+    msgs.push(newData);
+    // updatePts(newData, pts);
+    updateTable();
+    // updateViz();
+
+    value_as_number = newData.value_as_number;
+    // console.log(value_as_number);
+}
+
+// ======================
+// Build and update table
+// ======================
+// table inspect : 2nd div on page
+d3.select("#viz_inspect")
+    .append("table");
+
+
+function updateTable () {
+    // test function to print the original patient load
+    // function updates the data not the viz? not sure this is correct
+
+    console.log('sfsg: updateTable running');
+    let dd = msgs.slice(-10).reverse();
+    console.log(dd);
+    
+    d3.select("#viz_inspect").select("table")
+
+        .selectAll("tr")
+            .data(dd, function(i) {return i.timestamp;})
+            .join(
+                enter => enter.append("tr"),
+                update => update,
+                exit => exit.remove()
+            )
+
+        .selectAll("td")
+            // .data(function(d) { return d3.values(d); }).enter()
+            .data(function(d) { return [
+                d.visit_occurrence_id,
+                d.timestamp_str,
+                d.care_site_name,
+                d.value_as_number,
+                d.ward,
+                d.slug_room,
+                d.room,
+                d.bed
+                ] ; }).enter()
+            .append("td")
+            .text(function(d) { return (d); }) // ;
 }

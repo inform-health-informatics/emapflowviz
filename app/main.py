@@ -112,6 +112,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 print(">>>: No ward movements: skipping forward one TIME_DELTA")
                 continue
 
+            df = df.sort_values(by=['timestamp'])
             # create a group indicator (from room slug)
             df['grp'] = df['slug_room']
 

@@ -22,7 +22,7 @@ text {
 table {
     border-collapse: collapse;
     border: 2px black solid;
-    font: 12px sans-serif;
+    font: 8px sans-serif;
 }
 
 td {
