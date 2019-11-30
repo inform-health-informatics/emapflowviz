@@ -1,11 +1,15 @@
 // deployment on the GAE
 const pts = [];
-console.log(this.WEBSOCKET_SERVER);
+// console.log(this.WEBSOCKET_SERVER);
 var value_as_number = 100;
 
 // =====================
 // set up variables etc.
 // =====================
+// node parameters (for groups above)
+const radius = 5,
+    node_padding = 1, // Space between nodes
+    cluster_padding = 5; // Space between nodes in different stages
 
 const margin = {top: 40, right: 40, bottom: 40, left: 40},
     padding = {top: 60, right: 60, bottom: 60, left: 60},
@@ -16,29 +20,9 @@ const margin = {top: 40, right: 40, bottom: 40, left: 40},
     width = innerWidth - padding.left - padding.right,
     height = innerHeight - padding.top - padding.bottom;
 
-
-// node parameters (for groups above)
-const radius = 5,
-    node_padding = 1, // Space between nodes
-    cluster_padding = 5; // Space between nodes in different stages
-
-// copied from Bostock's path demo
-// this just creates an empty data set with all the values set to 100
-// TODO n creates the 'x' axis: need to switch to using dates and times
-const n = 50,
-    data = d3.range(n).map(d => 100);
-
-const x = d3.scaleLinear()
-    .domain([0, n - 1])
-    .range([0, width]);
-
-const y = d3.scaleLinear()
-    .domain([0, 150])
-    .range([height, 0]);
-
-const line = d3.line()
-    .x(function(d, i) { return x(i); })
-    .y(function(d, i) { return y(d); });
+// set up the initial svg object
+d3.select("#svg1").style("width", (width+margin.left+margin.right)+"px");
+d3.select("#svg2").style("width", (width+margin.left+margin.right)+"px");
 
 // Group coordinates and meta info.
 // these will be represented as 'nodes'
@@ -61,9 +45,17 @@ const groups = {
 };
 
 
+
 // ============================================================================
 // Functions
 // ============================================================================
+const pts_initial = d3.csv("static/data/pts_initial.csv");
+pts_initial.then(function(data) {
+    // these won't do anything because data is a promise
+    console.log(length(data));
+    console.log("foobarr");
+});
+
 
 function updatePts(msg, pts) {
     // push or update patient's current position
@@ -211,8 +203,6 @@ connection.onmessage = function(event) {
 // First SVG SVG1
 // =================================================================
 
-// set up the initial svg object
-d3.select("#svg1").style("width", (width+margin.left+margin.right)+"px");
 // D3 set-up
 // this function initially draws the viz
 
@@ -263,21 +253,6 @@ simulation.on("tick", function() {
 });
 
 
-// const simulation = d3.forceSimulation(pts)
-// .force("x", d => d3.forceX(d.x))
-// .force("y", d => d3.forceY(d.y))
-// .force("cluster", forceCluster())
-// .force("collide", forceCollide())
-// .alpha(.09)
-// .alphaDecay(0);
-
-// // Adjust position of circles.
-// simulation.on("tick", () => {    
-// circle
-//     .attr("cx", d => d.x)
-//     .attr("cy", d => d.y)
-//     .attr("fill", d => groups[d.group].color);
-// });
 
 // Group name labels
 svg1.selectAll('.grp')
@@ -290,76 +265,6 @@ svg1.selectAll('.grp')
     .text(d => groups[d].fullname);
 
 
-// Group counts
-// svg1.selectAll('.grpcnt')
-//     .data(d3.keys(groups))
-//     .join("text")
-//         .attr("class", "grpcnt")
-//         .attr("text-anchor", "middle")
-//         .attr("x", d => groups[d].x)
-//         .attr("y", d => groups[d].y+50)
-//         .text(d => groups[d].cnt);
-
-// =================================================================
-// Second SVG SVG2
-// =================================================================
-
-// set up svg to hold viz with margin transform
-const svg2 = d3.select("#viz2").append("svg")
-    .attr("width", outerWidth)
-    .attr("height", outerHeight)
-
-const g2 = svg2.append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-g2.append("defs").append("clipPath")
-    .attr("id", "clip")
-  .append("rect")
-    .attr("width", width)
-    .attr("height", height);
-
-// hide x-axis since you still need to work out the scale
-// g.append("g")
-//     .attr("class", "axis axis--x")
-//     .attr("transform", "translate(0," + y(0) + ")")
-//     .call(d3.axisBottom(x));
-
-g2.append("g")
-    .attr("class", "axis axis--y")
-    .call(d3.axisLeft(y));
-
-g2.append("g")
-    .attr("clip-path", "url(#clip)")
-  .append("path")
-    .datum(data)
-    .attr("class", "line")
-  .transition()
-    .duration(500)
-    .ease(d3.easeLinear)
-    .on("start", tick);
-
-
-// function tick() {
-//     // this runs the animation and defines what happens with each browser frame refresh
-//     // Push a new data point onto the back.
-
-//     data.push(value_as_number);
-//     // data.push(random());
-//     // Redraw the line.
-//     d3.select(this)
-//         .attr("d", line)
-//         .attr("transform", null);
-//     // Slide it to the left.
-//     d3.active(this)
-//         .attr("transform", "translate(" + x(-1) + ",0)")
-//         .transition()
-//         .on("start", tick);
-//     // Pop the old data point off the front.
-//     data.shift();
-
-//     svg1.selectAll('.grpcnt').text(d => groups[d].cnt);
-// }
 
 // ============================================================================
 // FORCES
