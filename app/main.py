@@ -39,7 +39,6 @@ curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 # Initial data load
 SQL = sql.SQL(cfg.SQL_STRING.format(cfg.TIME_ZERO, cfg.TIME_NOW))
 df_pts_initial = pd.read_sql(SQL, conn)
-# df_pts_initial = pd.DataFrame({"foo": [0,1], "bar":[2,3]})
 df_pts_initial = utils.visits_lengthen_and_label(df_pts_initial, cfg.STAR_OR_OMOP)
 df_pts_initial = utils.filter_visit_detail_long(df_pts_initial, column='ward', inclusions=['ED'])
 df_pts_initial['grp'] = df_pts_initial['slug_room']
@@ -63,7 +62,7 @@ async def websocket_endpoint(websocket: WebSocket):
     Handles the websocket connection
     """
     # pause to allow initil data load
-    await asyncio.sleep(15)
+    await asyncio.sleep(cfg.SIM_SPEED_SECS)
 
     TIME_START = cfg.TIME_START
     TIME_ENDS = cfg.TIME_ENDS

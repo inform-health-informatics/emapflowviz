@@ -1,9 +1,10 @@
 const people = {};
 const msgs = [];
+var nodes =[];
 let time_so_far = 0;
 let time_sim;
 let earliest_bed_visit;
-const n_discharges = 0;
+let n_discharges = 0;
 
 console.log(this.WEBSOCKET_SERVER);
 
@@ -51,6 +52,8 @@ const groups = {
     "PAEDS": { x: middle_col, y: bottom_row, color: "pink", cnt: 0, fullname: "PAEDS" },
     // HOSP visit ended
     "DC": { x: right_col+100 , y: middle_row, color: "black", cnt: 0, fullname: "DC" },
+    // PLACEHOLDER FOR NEW MESSAGES
+    "NEWBIE": { x: left_col-100 , y: middle_row, color: "white", cnt: 0, fullname: "NEWBIE" },
 };
 
 
@@ -61,6 +64,23 @@ const groups = {
 // const stages = d3.csv("static/data/adt4d3.csv");
 const stages = d3.csv("static/data/pts_initial.csv");
 
+function make_node_from_people (d) {
+    // expects a key from the people dictionary
+    // returns a dictionary organised for the node
+    return {
+        person_id: d,
+        x: groups[people[d][0].grp].x + Math.random(),
+        y: groups[people[d][0].grp].y + Math.random(),
+        r: radius,
+        color: groups[people[d][0].grp].color,
+        group: people[d][0].grp,
+        timeleft: people[d][0].bed_los,
+        istage: 0,
+        stages: people[d],
+        hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
+        hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
+    }
+}
 
 
 // Once data is loaded...
@@ -85,24 +105,11 @@ stages.then(function(data) {
     });
     
     // Create node data.
-    var nodes = d3.keys(people).map(function(d) {
+    nodes = d3.keys(people).map(function(d) {
         
         // Initialize coount for each group.
         groups[people[d][0].grp].cnt += 1;
-        
-        return {
-            id_node: "node"+d,
-            x: groups[people[d][0].grp].x + Math.random(),
-            y: groups[people[d][0].grp].y + Math.random(),
-            r: radius,
-            color: groups[people[d][0].grp].color,
-            group: people[d][0].grp,
-            timeleft: people[d][0].bed_los,
-            istage: 0,
-            stages: people[d],
-            hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
-            hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
-        }
+        return make_node_from_people(d)
     });
     // to permit inspection during debugging
     window.nodes_inspect = nodes;
@@ -316,18 +323,44 @@ connection.onclose = function() {
 
 connection.onmessage = function(event) {
     // function should update the data that d3 accesses
-    let newData = JSON.parse(
+    let d = JSON.parse(
         JSON.parse(event.data)
         );
-    console.log(newData);
-    newData.modified_at = Date.now();
+    console.log(d);
+    d.modified_at = Date.now();
+    msgs.push(d);
 
-    msgs.push(newData);
-    // updatePts(newData, pts);
+    if (d3.keys(people).includes(d.person_id+"")) {
+        people[d.person_id+""].push(d);
+    } else {
+        // people[d.person_id+""] = [d];
+    };
+
+    let nodes_idx = nodes.findIndex( i => {return i.person_id === d.person_id;});
+    // // push new patient or splice (delete and insert) as necessary
+    if (nodes_idx === -1) {
+        people[d.person_id+""] = [d];
+        console.log('new patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
+        d.grp='NEWBIE';
+        console.log(d.person_id);
+        console.log(make_node_from_people(d.person_id));
+        nodes.push(make_node_from_people(d.person_id));
+    //     console.log('room_slug: ' + d.slug_room)
+    //     d.push(d);
+    } else {
+        console.log('old patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
+    //     console.log('room_slug: ' + d.slug_room)
+    //     // console.log(d[pts_index]);
+    //     d.splice(pts_index, 1, d);
+    //     // console.log('new patient');
+    //     // console.log(d[pts_index]);
+
+    };
+    // updatePts(d, d);
     updateTable();
     // updateViz();
 
-    value_as_number = newData.value_as_number;
+    value_as_number = d.value_as_number;
     // console.log(value_as_number);
 }
 
@@ -343,9 +376,9 @@ function updateTable () {
     // test function to print the original patient load
     // function updates the data not the viz? not sure this is correct
 
-    console.log('sfsg: updateTable running');
+    // console.log('sfsg: updateTable running');
     let dd = msgs.slice(-10).reverse();
-    console.log(dd);
+    // console.log(dd);
     
     d3.select("#viz_inspect").select("table")
 
