@@ -167,7 +167,7 @@ stages.then(function(data) {
         svg.selectAll('.grpcnt').text(d => groups[d].cnt);
         
         // Do it again.
-        d3.timeout(timer, 20);
+        d3.timeout(timer, 200);
         
     } // @end timer()
 

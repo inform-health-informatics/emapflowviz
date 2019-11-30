@@ -187,14 +187,29 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
         'DISCH_TIME': 'hosp_visit_end',
         'encounter': 'visit_occurrence_id'
     }, axis=1)
+    # calculate hospital los
+    dfh = dfh.assign(hosp_los=lambda dfh: (dfh.hosp_visit_end-dfh.hosp_visit_start).dt.total_seconds())
 
     # Now sort out bed visits
     # =======================
     # df becomes just bed visits
     df = df[df['short_name_pf'] == 'BED_VISIT']
 
-    # Convert all ids to integers
-    df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
+    # prepare bed LOS and start stop
+    df_blos=df[['encounter', 'pp_parent_fact_id', 'short_name_pp', 'value_as_datetime']]
+    df_blos = df_blos[df_blos.short_name_pp !='LOCATION']
+    df_blos = df_blos.pivot(
+            index='pp_parent_fact_id',
+            columns='short_name_pp',
+            values='value_as_datetime'
+        )
+    df_blos = df_blos.rename({
+            'ARRIVAL_TIME': 'bed_visit_start',
+            'DISCH_TIME': 'bed_visit_end'
+        }, axis=1)
+    df_blos = df_blos.assign(bed_los=lambda df_blos: (df_blos.bed_visit_end-df_blos.bed_visit_start).dt.total_seconds())
+
+    # Prepare as long form ; one row per event and an end event
     # Drop unnecssary columns
     df = df[['encounter', 'pp_parent_fact_id', 'property_id', 'short_name_pp', 'value_as_datetime', 'value_as_string']]
     # Melt -> now becomes pivot because data is already long
@@ -242,23 +257,17 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     # now create a max indicator
     df['detail_i_max'] = df.groupby(["person_id", "visit_occurrence_id"])['detail_i'].transform(max)
 
-    # now drop where visit_end_datetime unless detail_i = detail_i_max
-    df = df[ (df.event == 'visit_start_datetime') |
-        ((df.event == 'visit_end_datetime') & (df.detail_i == df.detail_i_max))]
+    
+    # now drop where visit_end_datetime 
+    df = df[ (df.event == 'visit_start_datetime') ]
 
     # Drop unnecessary columns
-    df = df[['person_id', 'visit_occurrence_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
+    df = df[['person_id', 'visit_occurrence_id', 'pp_parent_fact_id', 'care_site_name', 'event', 'timestamp', 'detail_i']]
 
-    # Create a string representation of datetime
-    # df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # df['timestamp']=df['timestamp'].dt.tz_localize('UTC')
-    # df['timestamp']=df['timestamp'].dt.tz_convert('Europe/London')
-    # df['timestamp_str'] = df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S", utc=True)
-    # df['timestamp_str'] = df['timestamp'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S", utc=True))
-    # df['timestamp_str'] = df['timestamp'].apply(lambda x: x.to_datetime(utc=True))
-    # this is hacky but it works; everything else above fails
     df['timestamp_str'] = df['timestamp'].apply(lambda x: str(x))
 
+    # Now join on bed los info
+    df = df.merge(df_blos, left_on='pp_parent_fact_id', right_index=True)
     # Now join back on hospital visits
     df = df.merge(dfh, left_on='visit_occurrence_id', right_on='encounter')
 
