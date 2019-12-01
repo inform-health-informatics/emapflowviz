@@ -81,6 +81,75 @@ const mytable = d3.select("#viz_inspect").append("table");
 
 initial_pt_load();
 
+// ========================================
+// UPDATES based on messages from websocket
+// ========================================
+
+function restart () {
+
+}
+
+// ============================================================================
+// WEBSOCKETS
+// ============================================================================
+
+connection.onopen = function() {
+    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onclose = function() {
+    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
+}
+
+connection.onmessage = function(event) {
+    // function should update the data that d3 accesses
+    let d = JSON.parse(
+        JSON.parse(event.data)
+        );
+    d.modified_at = Date.now();
+    d.modified_at_str = dateTimeFormat.format(Date.now());
+    msgs.push(d);
+    console.log('new websocket message');
+    console.log(d);
+
+    // update the people dictionary of arrays
+    if (d3.keys(people).includes(d.person_id+"")) {
+        people[d.person_id+""].push(d);
+    } else {
+        people[d.person_id+""] = [d];
+    };
+
+    // update nodes separately because it is possible that the person has already left
+    let nodes_idx = nodes.findIndex( i => {return i.person_id === d.person_id;});
+
+    // push new patient or splice (delete and insert) as necessary
+    if (nodes_idx === -1) {
+        console.log('new patient: ' + d.person_id + '; nodes = '+ nodes.length);
+        // TODO create a fake stage called NEWBIE and use this / or just create a colour and set a timer
+        nodes.push(make_node_from_people(d.person_id));
+    } else {
+        console.log('old patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
+        console.log('updating nodes_idx: ' + nodes_idx);
+        // testing 
+        console.log("before foo: " + nodes[nodes_idx].foo)
+        nodes[nodes_idx].foo = Date.now();
+        console.log("after foo: " + nodes[nodes_idx].foo)
+        // update the hospital end date 
+        nodes[nodes_idx].hosp_visit_end = d.hosp_visit_end;
+        console.log("before stages length: " + nodes[nodes_idx].stages.length)
+        nodes[nodes_idx].stages.push(d);
+        console.log("after stages length: " + nodes[nodes_idx].stages.length)
+        // TODO update the prev stage duration so that it closes
+        // TODO update the prev stage bed duration
+
+
+    };
+
+    updateTable(mytable);
+
+    value_as_number = d.value_as_number;
+    // console.log(value_as_number);
+}
 // =========.
 // Load data.
 // =========.
@@ -101,6 +170,7 @@ async function initial_pt_load () {
     // The data file is one row per stage change.
     data.forEach(d => {
         d.modified_at = Date.now();
+        d.modified_at_str = dateTimeFormat.format(Date.now());
         if (d3.keys(people).includes(d.person_id+"")) {
             people[d.person_id+""].push(d);
         } else {
@@ -138,13 +208,13 @@ async function initial_pt_load () {
     window.cs_inspect = cs;
     
     // Ease in the circles.
-    cs.transition()
-      .delay((d, i) => i * 5)
-      .duration(800)
-      .attrTween("r", d => {
-        const i = d3.interpolate(0, d.r);
-        return t => d.r = i(t);
-      });
+    // cs.transition()
+    //   .delay((d, i) => i * 5)
+    //   .duration(800)
+    //   .attrTween("r", d => {
+    //     const i = d3.interpolate(0, d.r);
+    //     return t => d.r = i(t);
+    //   });
 
     // Group name labels
     svg.selectAll('.grp')
@@ -209,7 +279,7 @@ function timer() {
             // Increment counter for new group.
             groups[o.group].cnt += 1;
         };
-        if (time_sim > o.hosp_visit_end & o.group != "DC") {
+        if (!(o.hosp_visit_end === null) & time_sim > o.hosp_visit_end & o.group != "DC") {
             groups[o.group].cnt -= 1;
             o.group = "DC";
             groups[o.group].cnt += 1;
@@ -329,69 +399,6 @@ function forceCollide() {
   return force;
 }
 
-// ========================================
-// UPDATES based on messages from websocket
-// ========================================
-
-function restart () {
-
-}
-
-// ============================================================================
-// WEBSOCKETS
-// ============================================================================
-
-connection.onopen = function() {
-    console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
-}
-
-connection.onclose = function() {
-    console.log('>>> closed: websocket connection to ' + WEBSOCKET_SERVER)
-}
-
-connection.onmessage = function(event) {
-    // function should update the data that d3 accesses
-    let d = JSON.parse(
-        JSON.parse(event.data)
-        );
-    // console.log(d);
-    d.modified_at = Date.now();
-    msgs.push(d);
-
-    if (d3.keys(people).includes(d.person_id+"")) {
-        people[d.person_id+""].push(d);
-    } else {
-        // people[d.person_id+""] = [d];
-    };
-
-    let nodes_idx = nodes.findIndex( i => {return i.person_id === d.person_id;});
-    // // push new patient or splice (delete and insert) as necessary
-    if (nodes_idx === -1) {
-        people[d.person_id+""] = [d];
-        console.log('new patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
-        // d.color='white';
-        d.grp='NEWBIE';
-        console.log(d.person_id);
-        console.log(make_node_from_people(d.person_id));
-        nodes.push(make_node_from_people(d.person_id));
-    //     console.log('room_slug: ' + d.slug_room)
-    //     d.push(d);
-    } else {
-        console.log('old patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
-    //     console.log('room_slug: ' + d.slug_room)
-    //     // console.log(d[pts_index]);
-    //     d.splice(pts_index, 1, d);
-    //     // console.log('new patient');
-    //     // console.log(d[pts_index]);
-
-    };
-    // updatePts(d, d);
-    updateTable(mytable);
-    // updateViz();
-
-    value_as_number = d.value_as_number;
-    // console.log(value_as_number);
-}
 
 function updateTable (_table) {
     // test function to print the original patient load
