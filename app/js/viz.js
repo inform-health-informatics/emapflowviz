@@ -1,22 +1,28 @@
+// Arrays
 const people = {};
 const msgs = [];
 var nodes =[];
+
+// Tuning
 let time_so_far = 0;
 let time_sim;
 let earliest_bed_visit;
 let n_discharges = 0;
-
-console.log(this.WEBSOCKET_SERVER);
-const connection = new WebSocket(WEBSOCKET_SERVER);
-
-const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
-
 // Node size and spacing.
 const radius = 5,
 	  padding = 1, // Space between nodes
       cluster_padding = 5; // Space between nodes in different stages
+
+// files and servers
+const initial_csv = "static/data/pts_initial.csv";
+const connection = new WebSocket(WEBSOCKET_SERVER);
+
+// date and time formatting
+const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
+
     
+// SVG prep
 // Dimensions of chart.
 const margin = { top: 20, right: 20, bottom: 20, left: 20 },
       width = 900 - margin.left - margin.right,
@@ -108,6 +114,7 @@ connection.onmessage = function(event) {
         );
     d.modified_at = Date.now();
     d.modified_at_str = dateTimeFormat.format(Date.now());
+    d.source = 'websocket';
     msgs.push(d);
     console.log('new websocket message');
     console.log(d);
@@ -126,21 +133,32 @@ connection.onmessage = function(event) {
     if (nodes_idx === -1) {
         console.log('new patient: ' + d.person_id + '; nodes = '+ nodes.length);
         // TODO create a fake stage called NEWBIE and use this / or just create a colour and set a timer
-        nodes.push(make_node_from_people(d.person_id));
+        nodes.push(make_node_from_people(d.person_id, source='websocket'));
     } else {
         console.log('old patient: ' + d.visit_occurrence_id + '; nodes = '+ nodes.length);
-        console.log('updating nodes_idx: ' + nodes_idx);
-        // testing 
-        console.log("before foo: " + nodes[nodes_idx].foo)
-        nodes[nodes_idx].foo = Date.now();
-        console.log("after foo: " + nodes[nodes_idx].foo)
-        // update the hospital end date 
-        nodes[nodes_idx].hosp_visit_end = d.hosp_visit_end;
-        console.log("before stages length: " + nodes[nodes_idx].stages.length)
-        nodes[nodes_idx].stages.push(d);
-        console.log("after stages length: " + nodes[nodes_idx].stages.length)
-        // TODO update the prev stage duration so that it closes
-        // TODO update the prev stage bed duration
+        n_stages = nodes[nodes_idx].stages.length
+        // TODO join on pp_parent_fact
+        if (nodes[nodes_idx]
+                .stages.map(d => d.pp_parent_fact_id)
+                .includes(d.pp_parent_fact_id)) {
+            console.log("!!! fact already exists");
+        } else {
+            console.log(">>> new fact");
+            console.log('updating nodes_idx: ' + nodes_idx);
+            // // testing 
+            // console.log("before foo: " + nodes[nodes_idx].foo)
+            // nodes[nodes_idx].foo = Date.now();
+            // console.log("after foo: " + nodes[nodes_idx].foo)
+            // update the hospital end date 
+            nodes[nodes_idx].hosp_visit_end = d.hosp_visit_end;
+            console.log("before stages length: " + nodes[nodes_idx].stages.length)
+            nodes[nodes_idx].stages.push(d);
+            console.log("after stages length: " + nodes[nodes_idx].stages.length)
+            // TODO update the prev stage duration so that it closes
+            // nodes[nodes_idx].stages[n_stages-2].
+            // TODO update the prev stage bed duration
+
+        }
 
 
     };
@@ -156,7 +174,7 @@ connection.onmessage = function(event) {
 // asynchronous promise 
 
 async function initial_pt_load () {
-    const data = await d3.csv("static/data/pts_initial.csv");
+    const data = await d3.csv(initial_csv);
     // Once data is loaded...
 
     
@@ -170,6 +188,7 @@ async function initial_pt_load () {
     // The data file is one row per stage change.
     data.forEach(d => {
         d.modified_at = Date.now();
+        d.source = initial_csv;
         d.modified_at_str = dateTimeFormat.format(Date.now());
         if (d3.keys(people).includes(d.person_id+"")) {
             people[d.person_id+""].push(d);
@@ -183,7 +202,7 @@ async function initial_pt_load () {
         
         // Initialize coount for each group.
         groups[people[d][0].grp].cnt += 1;
-        return make_node_from_people(d)
+        return make_node_from_people(d, source='csv')
     });
     // to permit inspection during debugging
     window.nodes_inspect = nodes;
@@ -257,8 +276,11 @@ function timer() {
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("fill", d => d.color)
+          .attr("r", 5)
           .merge(cs);
 
+    // update simulation with new nodes every second (even though they're
+    // already in the nodes array)
     if (time_so_far % 1000 === 0) {
 
         simulation.nodes(nodes);
@@ -295,7 +317,7 @@ function timer() {
     
     // Increment time.
     time_so_far += 1;
-    time_sim += 60000;
+    time_sim += 60000; // microseconds hence 1 minute per loop
     d3.select("#timenow .cnt").text(dateTimeFormat.format((time_sim)));
     // d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
     d3.select("#timecount .cnt").text(time_so_far);
@@ -313,7 +335,7 @@ function timer() {
 // FUNCTIONS and methods etc
 // =========================
 
-function make_node_from_people (d) {
+function make_node_from_people (d, source) {
     // expects a key from the people dictionary
     // returns a dictionary organised for the node
     return {
@@ -327,7 +349,8 @@ function make_node_from_people (d) {
         istage: 0,
         stages: people[d],
         hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
-        hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
+        hosp_visit_end: Date.parse(people[d][0].hosp_visit_end),
+        source: source
     }
 }
 
@@ -343,6 +366,13 @@ function ticked () {
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .attr("fill", d => groups[d.group].color);
+        // .attr("fill", function(d) {
+        //     if (d.source === "websocket") {
+        //         "white"
+        //     } else {
+        //         groups[d.group].color
+        //     }
+        // })
 }
 
 // Force to increment nodes to groups.
