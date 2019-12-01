@@ -122,6 +122,8 @@ async function initial_pt_load () {
     // t = svg.transition().duration(1500).ease(i => i);
     cs = cs.data(nodes, d => d.person_id);
     cs.exit()
+        .transition()
+        .duration(1000)
         .attr("fill", "black")
         .remove();
     cs = cs.enter().append("circle")
@@ -136,13 +138,13 @@ async function initial_pt_load () {
     window.cs_inspect = cs;
     
     // Ease in the circles.
-    // cs.transition()
-    //   .delay((d, i) => i * 5)
-    //   .duration(800)
-    //   .attrTween("r", d => {
-    //     const i = d3.interpolate(0, d.r);
-    //     return t => d.r = i(t);
-    //   });
+    cs.transition()
+      .delay((d, i) => i * 5)
+      .duration(800)
+      .attrTween("r", d => {
+        const i = d3.interpolate(0, d.r);
+        return t => d.r = i(t);
+      });
 
     // Group name labels
     svg.selectAll('.grp')
@@ -165,11 +167,11 @@ async function initial_pt_load () {
           .text(d => groups[d].cnt);
 
     simulation.nodes(nodes);
-    simulation.alpha(1).restart();
+    simulation.alpha(0.01).velocityDecay(0.5).restart();
 
     // Start things off after a few seconds.
     // !!! and because timer then calls itself then this is actually the start of a loop
-    d3.timeout(timer, 200);
+    d3.timeout(timer, 2000);
    
     
 }
@@ -190,7 +192,7 @@ function timer() {
     if (time_so_far % 1000 === 0) {
 
         simulation.nodes(nodes);
-        simulation.restart();
+        simulation.alpha(0.09).restart();
     };
     
     nodes.forEach(function(o,i) {
