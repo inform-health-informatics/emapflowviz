@@ -20,15 +20,24 @@ STAR_OR_OMOP="STAR"  # config to define which DB to use
 # SIM_ SPEED_SECS is the delay between SQL queries and updates
 # Each message then gets loaded 10x faster
 SIM_SPEED_SECS = 5
-TIME_ZERO = datetime.datetime(2019, 5, 25, 19)
-TIME_START = datetime.datetime(2019, 5, 27, 19)
-TIME_ENDS = datetime.datetime(2019, 11, 29, 19)
+TIME_ZERO = datetime.datetime(2019, 11, 27, 19)
+TIME_START = datetime.datetime(2019, 11, 28, 15)
 TIME_NOW = TIME_START
+TIME_ENDS = datetime.datetime(2019, 11, 29, 19)
 TIME_DELTA = datetime.timedelta(hours=1)
 TIME_MULT = 1
 
 if DEBUG:
-    SQL_STRING = "SELECT * FROM star_visits"
+    SQL_STRING = """
+    SELECT * FROM star_visits
+        WHERE
+            attr_id_pf IN (5,6,7,8,9)
+        AND 
+            pp_valid_from > '{}'
+        AND
+            pp_valid_from <= '{}'
+        ORDER BY pp_valid_from desc;
+    """
 else:
     if STAR_OR_OMOP == "STAR":
         # EMAP STAR version

@@ -37,7 +37,7 @@ conn = utils.make_postgres_conn(cfg)
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 # Initial data load
-SQL = sql.SQL(cfg.SQL_STRING.format(cfg.TIME_ZERO, cfg.TIME_NOW))
+SQL = sql.SQL(cfg.SQL_STRING.format(cfg.TIME_ZERO, cfg.TIME_START))
 df_pts_initial = pd.read_sql(SQL, conn)
 df_pts_initial = utils.visits_lengthen_and_label(df_pts_initial, cfg.STAR_OR_OMOP)
 df_pts_initial = utils.filter_visit_detail_long(df_pts_initial, column='ward', inclusions=['ED'])
@@ -64,9 +64,9 @@ async def websocket_endpoint(websocket: WebSocket):
     # pause to allow initil data load
     await asyncio.sleep(cfg.SIM_SPEED_SECS)
 
-    TIME_START = cfg.TIME_START
+    TIME_NOW = cfg.TIME_START
     TIME_ENDS = cfg.TIME_ENDS
-    TIME_NOW = cfg.TIME_NOW
+
     TIME_DELTA = cfg.TIME_DELTA
     TIME_MULT = cfg.TIME_MULT
     SIM_SPEED_SECS = cfg.SIM_SPEED_SECS
@@ -115,11 +115,6 @@ async def websocket_endpoint(websocket: WebSocket):
             # create a group indicator (from room slug)
             df['grp'] = df['slug_room']
 
-            await websocket.send_json({
-                "n_events": df.shape[0],
-                "time_then": str(TIME_THEN),
-                "time_now": str(TIME_NOW)
-            } )
             for index, row in df.iterrows():
                 event = row.to_json()
                 await websocket.send_json(event)
