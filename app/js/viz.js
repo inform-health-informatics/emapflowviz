@@ -160,6 +160,21 @@ connection.onmessage = function(event) {
 
         }
 
+        cs = cs.data(nodes, d => d.person_id);
+        cs.exit()
+            .attr("fill", "black")
+            .remove();
+        cs = cs.enter().append("circle")
+              .attr("id", d => d.person_id)
+              .attr("cx", d => d.x)
+              .attr("cy", d => d.y)
+              .attr("fill", d => d.color)
+              .attr("r", 5)
+              .merge(cs);
+
+        simulation.nodes(nodes);
+        simulation.alpha(0.01).velocityDecay(0.5).restart();
+
 
     };
 
