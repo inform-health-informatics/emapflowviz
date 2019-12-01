@@ -47,6 +47,16 @@ const groups = {
     "NEWBIE": { x: left_col-100 , y: middle_row, color: "white", cnt: 0, fullname: "NEWBIE" },
 };
 
+// set up the simulation object
+const simulation = d3.forceSimulation()
+    .force("x", d => d3.forceX(d.x))
+    .force("y", d => d3.forceY(d.y))
+    .force("cluster", forceCluster())
+    .force("collide", forceCollide())
+    .alpha(.09)
+    .alphaDecay(0)
+    .on("tick", ticked);
+
 // ======================
 // SVG DIV
 // ======================
@@ -61,13 +71,6 @@ const svg = d3.select("#chart").append("svg")
 var cs = svg.append("g")
     .attr("id", "bubbles")
     .selectAll("circle");
-    // .data(nodes)
-    // .join("circle")
-    //     .attr("id", d => d.person_id)
-    //     .attr("cx", d => d.x)
-    //     .attr("cy", d => d.y)
-    //     .attr("fill", d => d.color);
-    // to permit inspection during debugging
 
 // ======================
 // Table DIV
@@ -116,17 +119,6 @@ async function initial_pt_load () {
     window.nodes_inspect = nodes;
     
     
-    // cs for each node.
-    // const cs = svg.append("g")
-    //     .attr("id", "bubbles")
-    //     .selectAll("circle")
-    //     .data(nodes)
-    //     .join("circle")
-    //       .attr("id", d => d.person_id)
-    //       .attr("cx", d => d.x)
-    //       .attr("cy", d => d.y)
-    //       .attr("fill", d => d.color);
-
     // t = svg.transition().duration(1500).ease(i => i);
     cs = cs.data(nodes, d => d.person_id);
     cs.exit()
@@ -152,8 +144,6 @@ async function initial_pt_load () {
     //     return t => d.r = i(t);
     //   });
 
-
-
     // Group name labels
     svg.selectAll('.grp')
       .data(d3.keys(groups))
@@ -174,28 +164,9 @@ async function initial_pt_load () {
           .attr("y", d => groups[d].y+70)
           .text(d => groups[d].cnt);
 
-
-
-    // Forces
-    // const simulation = d3.forceSimulation(nodes)
-    //     .force("x", d => d3.forceX(d.x))
-    //     .force("y", d => d3.forceY(d.y))
-    //     .force("cluster", forceCluster())
-    //     .force("collide", forceCollide())
-    //     .alpha(.09)
-    //     .alphaDecay(0);
     simulation.nodes(nodes);
     simulation.alpha(1).restart();
 
-    // Adjust position of circles.
-    // simulation.on("tick", () => {    
-    //     cs
-    //         .attr("cx", d => d.x)
-    //         .attr("cy", d => d.y)
-    //         .attr("fill", d => groups[d.group].color);
-    //     });
-    
-    
     // Start things off after a few seconds.
     // !!! and because timer then calls itself then this is actually the start of a loop
     d3.timeout(timer, 200);
@@ -205,7 +176,6 @@ async function initial_pt_load () {
 
 function timer() {
 
-    // console.log('foo');
     cs = cs.data(nodes, d => d.person_id);
     cs.exit()
         .attr("fill", "black")
@@ -217,22 +187,7 @@ function timer() {
           .attr("fill", d => d.color)
           .merge(cs);
 
-    if (time_so_far % 50 === 0) {
-        // console.log(nodes);
-        // TODO make this function run asynchronously
-        // svg
-        // .select("#bubbles")
-        // .selectAll("circle")
-        // .data(nodes, d => d.person_id)
-        // .join(
-        //     enter => enter .append("circle")
-        //         .attr("cx", d => d.x)
-        //         .attr("cy", d => d.y)
-        //         .attr("r", d => d.r)
-        //         .attr("fill", d => d.color),
-        //     update => update,
-        //     exit => exit.remove()
-        // );
+    if (time_so_far % 1000 === 0) {
 
         simulation.nodes(nodes);
         simulation.restart();
@@ -309,29 +264,14 @@ function make_node_from_people (d) {
 // FUNCTIONS for FORCES
 // =========================
 
-const simulation = d3.forceSimulation()
-    .force("x", d => d3.forceX(d.x))
-    .force("y", d => d3.forceY(d.y))
-    .force("cluster", forceCluster())
-    .force("collide", forceCollide())
-    .alpha(.09)
-    .alphaDecay(0)
-    .on("tick", ticked);
 
+// what to do with each tick
 function ticked () {
     cs
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .attr("fill", d => groups[d.group].color);
 }
-
-// Adjust position of circles.
-// simulation.on("tick", () => {    
-//     cs
-//         .attr("cx", d => d.x)
-//         .attr("cy", d => d.y)
-//         .attr("fill", d => groups[d.group].color);
-//     });
 
 // Force to increment nodes to groups.
 function forceCluster() {
@@ -391,7 +331,9 @@ function forceCollide() {
 // UPDATES based on messages from websocket
 // ========================================
 
-// function restart
+function restart () {
+
+}
 
 // ============================================================================
 // WEBSOCKETS
