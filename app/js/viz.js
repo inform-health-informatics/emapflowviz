@@ -4,10 +4,16 @@ const msgs = [];
 var nodes =[];
 
 // Tuning
+const timer_loop_delay = 10;
 let time_so_far = 0;
 let time_sim;
 let earliest_bed_visit;
 let n_discharges = 0;
+
+// force tuning
+// increment nodes toward groups
+const strength = 1.75;
+
 // Node size and spacing.
 const radius = 5,
 	  padding = 1, // Space between nodes
@@ -29,6 +35,7 @@ const margin = { top: 20, right: 20, bottom: 20, left: 20 },
       height = 360 - margin.top - margin.bottom; 
 
 
+
 // Group coordinates and meta info.
 // these will be represented as 'nodes'
 let top_row = height*1/4
@@ -39,19 +46,41 @@ let middle_col = width*2/4
 let right_col = width*3/4
 
 const groups = {
-    "TRIAGE": { x: middle_col, y: middle_row, color: "green", cnt: 0, fullname: "TRIAGE" },
-    "DIAGNOSTICS": { x: middle_col, y: top_row, color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
-    "UTC": { x: left_col, y: top_row, color: "purple", cnt: 0, fullname: "UTC" },
-    "RAT": { x: left_col, y: middle_row, color: "blue", cnt: 0, fullname: "RAT" },
-    "MAJORS": { x: right_col, y: middle_row, color: "red", cnt: 0, fullname: "MAJORS" },
-    "RESUS": { x: right_col, y: bottom_row, color: "red", cnt: 0, fullname: "RESUS" },
-    "OTHER": { x: left_col, y: bottom_row, color: "orange", cnt: 0, fullname: "OTHER" },
-    "PAEDS": { x: middle_col, y: bottom_row, color: "pink", cnt: 0, fullname: "PAEDS" },
+    "TRIAGE": { position: 1,  color: "green", cnt: 0, fullname: "TRIAGE" },
+    "DIAGNOSTICS": { position: 2,  color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
+    "UTC": { position: 3,  color: "purple", cnt: 0, fullname: "UTC" },
+    "RAT": { position: 4,  color: "blue", cnt: 0, fullname: "RAT" },
+    "MAJORS": { position: 5,  color: "red", cnt: 0, fullname: "MAJORS" },
+    "RESUS": { position: 6,  color: "red", cnt: 0, fullname: "RESUS" },
+    "OTHER": { position: 7,  color: "orange", cnt: 0, fullname: "OTHER" },
+    "PAEDS": { position: 8,  color: "pink", cnt: 0, fullname: "PAEDS" },
     // HOSP visit ended
-    "DC": { x: right_col+100 , y: middle_row, color: "black", cnt: 0, fullname: "DC" },
+    "DC": { position: 9,  color: "black", cnt: 0, fullname: "DC" },
     // PLACEHOLDER FOR NEW MESSAGES
-    "NEWBIE": { x: left_col-100 , y: middle_row, color: "white", cnt: 0, fullname: "NEWBIE" },
+    "NEWBIE": { position: 10,  color: "white", cnt: 0, fullname: "NEWBIE" },
 };
+
+// set up positions of wards
+// TODO convert to circle
+function degrees2radians (x) { return (x%360)/360 * 2 * Math.PI; }
+function x_polar (x, radius) { return width/2 +  radius * Math.cos(degrees2radians(x))}
+function y_polar (y, radius) { return height/2 + radius * Math.sin(degrees2radians(y))}
+// TODO need error checking to make sure that positions are unique and sequential
+const group_ring_radius = Math.min(width,height)/2 * 0.70;
+let label_offset = group_ring_radius * 1.5;
+let cnt_offset = group_ring_radius * 1.3;
+let positions = d3.keys(groups).length;
+
+d3.keys(groups).map(e => {groups[e].x = x_polar(groups[e].position/positions*360, group_ring_radius)})
+d3.keys(groups).map(e => {groups[e].y = y_polar(groups[e].position/positions*360, group_ring_radius)})
+
+d3.keys(groups).map(e => {groups[e].label_x = x_polar(groups[e].position/positions*360, label_offset)})
+d3.keys(groups).map(e => {groups[e].label_y = y_polar(groups[e].position/positions*360, label_offset)})
+
+d3.keys(groups).map(e => {groups[e].cnt_x = (groups[e].label_x)})
+d3.keys(groups).map(e => {groups[e].cnt_y = (groups[e].label_y+20)})
+// d3.keys(groups).map(e => {groups[e].cnt_x = x_polar(groups[e].position/positions*360, cnt_offset)})
+// d3.keys(groups).map(e => {groups[e].cnt_y = y_polar(groups[e].position/positions*360, cnt_offset)})
 
 // set up the simulation object
 const simulation = d3.forceSimulation()
@@ -256,8 +285,8 @@ async function initial_pt_load () {
       .join("text")
           .attr("class", "grp")
           .attr("text-anchor", "middle")
-          .attr("x", d => groups[d].x)
-          .attr("y", d => groups[d].y+50)
+          .attr("x", d => groups[d].label_x)
+          .attr("y", d => groups[d].label_y)
           .text(d => groups[d].fullname);
           
     // Group counts
@@ -266,8 +295,8 @@ async function initial_pt_load () {
       .join("text")
           .attr("class", "grpcnt")
           .attr("text-anchor", "middle")
-          .attr("x", d => groups[d].x)
-          .attr("y", d => groups[d].y+70)
+          .attr("x", d => groups[d].cnt_x)
+          .attr("y", d => groups[d].cnt_y)
           .text(d => groups[d].cnt);
 
     simulation.nodes(nodes);
@@ -342,7 +371,7 @@ function timer() {
     
     // Do it again.
     // !!! see comment above; this is a loop
-    d3.timeout(timer, 100);
+    d3.timeout(timer, timer_loop_delay);
     
 } // @end timer()
 
@@ -392,7 +421,6 @@ function ticked () {
 
 // Force to increment nodes to groups.
 function forceCluster() {
-  const strength = .15;
   let nodes;
 
   function force(alpha) {
