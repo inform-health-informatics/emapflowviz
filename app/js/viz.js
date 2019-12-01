@@ -7,7 +7,7 @@ let earliest_bed_visit;
 let n_discharges = 0;
 
 console.log(this.WEBSOCKET_SERVER);
-
+const connection = new WebSocket(WEBSOCKET_SERVER);
 
 const options1 = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: "numeric" };
 const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
@@ -58,6 +58,16 @@ const svg = d3.select("#chart").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+var cs = svg.append("g")
+    .attr("id", "bubbles")
+    .selectAll("circle");
+    // .data(nodes)
+    // .join("circle")
+    //     .attr("id", d => d.person_id)
+    //     .attr("cx", d => d.x)
+    //     .attr("cy", d => d.y)
+    //     .attr("fill", d => d.color);
+    // to permit inspection during debugging
 
 // ======================
 // Table DIV
@@ -107,26 +117,40 @@ async function initial_pt_load () {
     
     
     // cs for each node.
-    const cs = svg.append("g")
-        .attr("id", "bubbles")
-        .selectAll("circle")
-        .data(nodes)
-        .join("circle")
+    // const cs = svg.append("g")
+    //     .attr("id", "bubbles")
+    //     .selectAll("circle")
+    //     .data(nodes)
+    //     .join("circle")
+    //       .attr("id", d => d.person_id)
+    //       .attr("cx", d => d.x)
+    //       .attr("cy", d => d.y)
+    //       .attr("fill", d => d.color);
+
+    // t = svg.transition().duration(1500).ease(i => i);
+    cs = cs.data(nodes, d => d.person_id);
+    cs.exit()
+        .attr("fill", "black")
+        .remove();
+    cs = cs.enter().append("circle")
           .attr("id", d => d.person_id)
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
-          .attr("fill", d => d.color);
+          .attr("r", 5)
+          .attr("fill", d => d.color)
+          .merge(cs);
+
     // to permit inspection during debugging
     window.cs_inspect = cs;
     
     // Ease in the circles.
-    cs.transition()
-      .delay((d, i) => i * 5)
-      .duration(800)
-      .attrTween("r", d => {
-        const i = d3.interpolate(0, d.r);
-        return t => d.r = i(t);
-      });
+    // cs.transition()
+    //   .delay((d, i) => i * 5)
+    //   .duration(800)
+    //   .attrTween("r", d => {
+    //     const i = d3.interpolate(0, d.r);
+    //     return t => d.r = i(t);
+    //   });
 
 
 
@@ -153,99 +177,110 @@ async function initial_pt_load () {
 
 
     // Forces
-    const simulation = d3.forceSimulation(nodes)
-        .force("x", d => d3.forceX(d.x))
-        .force("y", d => d3.forceY(d.y))
-        .force("cluster", forceCluster())
-        .force("collide", forceCollide())
-        .alpha(.09)
-        .alphaDecay(0);
+    // const simulation = d3.forceSimulation(nodes)
+    //     .force("x", d => d3.forceX(d.x))
+    //     .force("y", d => d3.forceY(d.y))
+    //     .force("cluster", forceCluster())
+    //     .force("collide", forceCollide())
+    //     .alpha(.09)
+    //     .alphaDecay(0);
+    simulation.nodes(nodes);
+    simulation.alpha(1).restart();
 
     // Adjust position of circles.
-    simulation.on("tick", () => {    
-        cs
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y)
-            .attr("fill", d => groups[d.group].color);
-        });
+    // simulation.on("tick", () => {    
+    //     cs
+    //         .attr("cx", d => d.x)
+    //         .attr("cy", d => d.y)
+    //         .attr("fill", d => groups[d.group].color);
+    //     });
     
-    
-    
-    
-    // Make time pass. Adjust node stage as necessary.
-    function timer() {
-
-        if (time_so_far % 50 === 0) {
-            // console.log(nodes);
-            // TODO make this function run asynchronously
-            svg
-            .select("#bubbles")
-            .selectAll("circle")
-            .data(nodes, d => d.person_id)
-            .join(
-                enter => enter .append("circle")
-                    .attr("cx", d => d.x)
-                    .attr("cy", d => d.y)
-                    .attr("r", d => d.r)
-                    .attr("fill", d => d.color),
-                update => update,
-                exit => exit.remove()
-            );
-
-            simulation.nodes(nodes);
-            simulation.restart();
-        };
-        
-        nodes.forEach(function(o,i) {
-            o.timeleft -= 1;
-            if (o.timeleft == 0 && o.istage < o.stages.length-1) {
-                // Decrease counter for previous group.
-                groups[o.group].cnt -= 1;
-                
-                // Update current node to new group.
-                o.istage += 1;
-                o.group = o.stages[o.istage].grp;
-                o.timeleft = o.stages[o.istage].duration;
-                
-                // Increment counter for new group.
-                groups[o.group].cnt += 1;
-            };
-            if (time_sim > o.hosp_visit_end & o.group != "DC") {
-                groups[o.group].cnt -= 1;
-                o.group = "DC";
-                groups[o.group].cnt += 1;
-                // console.log(o.id_node + " has left the building");
-                
-            }
-        });
-        nodes = nodes.filter(function(el) { return el.group != "DC"; });
-        // for debugging; gets these local variables visible
-        nodes_inspect = nodes;
-        cs_inspect = cs;
-
-        
-        // Increment time.
-        time_so_far += 1;
-        time_sim += 60000;
-        d3.select("#timenow .cnt").text(dateTimeFormat.format((time_sim)));
-        // d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
-        d3.select("#timecount .cnt").text(time_so_far);
-        
-        // Update counters.
-        svg.selectAll('.grpcnt').text(d => groups[d].cnt);
-        
-        // Do it again.
-        d3.timeout(timer, 20);
-        
-    } // @end timer()
-
     
     // Start things off after a few seconds.
-    d3.timeout(timer, 2000);
+    // !!! and because timer then calls itself then this is actually the start of a loop
+    d3.timeout(timer, 200);
    
     
 }
 
+function timer() {
+
+    // console.log('foo');
+    cs = cs.data(nodes, d => d.person_id);
+    cs.exit()
+        .attr("fill", "black")
+        .remove();
+    cs = cs.enter().append("circle")
+          .attr("id", d => d.person_id)
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y)
+          .attr("fill", d => d.color)
+          .merge(cs);
+
+    if (time_so_far % 50 === 0) {
+        // console.log(nodes);
+        // TODO make this function run asynchronously
+        // svg
+        // .select("#bubbles")
+        // .selectAll("circle")
+        // .data(nodes, d => d.person_id)
+        // .join(
+        //     enter => enter .append("circle")
+        //         .attr("cx", d => d.x)
+        //         .attr("cy", d => d.y)
+        //         .attr("r", d => d.r)
+        //         .attr("fill", d => d.color),
+        //     update => update,
+        //     exit => exit.remove()
+        // );
+
+        simulation.nodes(nodes);
+        simulation.restart();
+    };
+    
+    nodes.forEach(function(o,i) {
+        o.timeleft -= 1;
+        if (o.timeleft == 0 && o.istage < o.stages.length-1) {
+            // Decrease counter for previous group.
+            groups[o.group].cnt -= 1;
+            
+            // Update current node to new group.
+            o.istage += 1;
+            o.group = o.stages[o.istage].grp;
+            o.timeleft = o.stages[o.istage].duration;
+            
+            // Increment counter for new group.
+            groups[o.group].cnt += 1;
+        };
+        if (time_sim > o.hosp_visit_end & o.group != "DC") {
+            groups[o.group].cnt -= 1;
+            o.group = "DC";
+            groups[o.group].cnt += 1;
+            // console.log(o.id_node + " has left the building");
+            
+        }
+    });
+    nodes = nodes.filter(function(el) { return el.group != "DC"; });
+    // for debugging; gets these local variables visible
+    nodes_inspect = nodes;
+    cs_inspect = cs;
+
+    
+    // Increment time.
+    time_so_far += 1;
+    time_sim += 60000;
+    d3.select("#timenow .cnt").text(dateTimeFormat.format((time_sim)));
+    // d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
+    d3.select("#timecount .cnt").text(time_so_far);
+    
+    // Update counters.
+    svg.selectAll('.grpcnt').text(d => groups[d].cnt);
+    
+    // Do it again.
+    // !!! see comment above; this is a loop
+    d3.timeout(timer, 100);
+    
+} // @end timer()
 
 // =========================
 // FUNCTIONS and methods etc
@@ -273,6 +308,30 @@ function make_node_from_people (d) {
 // =========================
 // FUNCTIONS for FORCES
 // =========================
+
+const simulation = d3.forceSimulation()
+    .force("x", d => d3.forceX(d.x))
+    .force("y", d => d3.forceY(d.y))
+    .force("cluster", forceCluster())
+    .force("collide", forceCollide())
+    .alpha(.09)
+    .alphaDecay(0)
+    .on("tick", ticked);
+
+function ticked () {
+    cs
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("fill", d => groups[d.group].color);
+}
+
+// Adjust position of circles.
+// simulation.on("tick", () => {    
+//     cs
+//         .attr("cx", d => d.x)
+//         .attr("cy", d => d.y)
+//         .attr("fill", d => groups[d.group].color);
+//     });
 
 // Force to increment nodes to groups.
 function forceCluster() {
@@ -328,11 +387,16 @@ function forceCollide() {
   return force;
 }
 
+// ========================================
+// UPDATES based on messages from websocket
+// ========================================
+
+// function restart
+
 // ============================================================================
 // WEBSOCKETS
 // ============================================================================
 
-const connection = new WebSocket(WEBSOCKET_SERVER);
 connection.onopen = function() {
     console.log('>>> opened: websocket connection to ' + WEBSOCKET_SERVER)
 }
