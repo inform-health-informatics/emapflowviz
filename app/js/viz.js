@@ -22,15 +22,6 @@ const margin = { top: 20, right: 20, bottom: 20, left: 20 },
       width = 900 - margin.left - margin.right,
       height = 360 - margin.top - margin.bottom; 
 
-const svg = d3.select("#chart").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-d3.select("#chart").style("width", (width+margin.left+margin.right)+"px");
-
-
 
 // Group coordinates and meta info.
 // these will be represented as 'nodes'
@@ -56,41 +47,41 @@ const groups = {
     "NEWBIE": { x: left_col-100 , y: middle_row, color: "white", cnt: 0, fullname: "NEWBIE" },
 };
 
+// ======================
+// SVG DIV
+// ======================
+
+d3.select("#chart").style("width", (width+margin.left+margin.right)+"px");
+const svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
+// ======================
+// Table DIV
+// ======================
+// table inspect : 2nd div on page
+d3.select("#viz_inspect").style("width", (width+margin.left+margin.right)+"px");
+const mytable = d3.select("#viz_inspect").append("table");
+
+initial_pt_load();
+
+// =========.
 // Load data.
-// const stages = d3.tsv("data/stages.tsv", d3.autoType);
-// const stages = d3.csv("data/stages.csv");
-// const stages = d3.csv("static/data/adt4d3.csv");
-const stages = d3.csv("static/data/pts_initial.csv");
+// =========.
+// asynchronous promise 
 
-function make_node_from_people (d) {
-    // expects a key from the people dictionary
-    // returns a dictionary organised for the node
-    return {
-        person_id: d,
-        x: groups[people[d][0].grp].x + Math.random(),
-        y: groups[people[d][0].grp].y + Math.random(),
-        r: radius,
-        color: groups[people[d][0].grp].color,
-        group: people[d][0].grp,
-        timeleft: people[d][0].bed_los,
-        istage: 0,
-        stages: people[d],
-        hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
-        hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
-    }
-}
+async function initial_pt_load () {
+    const data = await d3.csv("static/data/pts_initial.csv");
+    // Once data is loaded...
 
-
-// Once data is loaded...
-stages.then(function(data) {
     
     // Define when sim starts based on the earliest time in the data
     earliest_bed_visit = d3.min(data, function(d) {
         return Date.parse(d.bed_visit_start);
       });
-    console.log(earliest_bed_visit);
     time_sim = earliest_bed_visit;
     
     // Consolidate stages by pid. (person_id)
@@ -170,14 +161,12 @@ stages.then(function(data) {
         .alpha(.09)
         .alphaDecay(0);
 
-    // Adjust position of css.
+    // Adjust position of circles.
     simulation.on("tick", () => {    
         cs
             .attr("cx", d => d.x)
             .attr("cy", d => d.y)
             .attr("fill", d => groups[d.group].color);
-        // cs
-        //     .attr("fill", "blue");
         });
     
     
@@ -255,11 +244,35 @@ stages.then(function(data) {
     d3.timeout(timer, 2000);
    
     
-});
+}
 
 
+// =========================
+// FUNCTIONS and methods etc
+// =========================
+
+function make_node_from_people (d) {
+    // expects a key from the people dictionary
+    // returns a dictionary organised for the node
+    return {
+        person_id: d,
+        x: groups[people[d][0].grp].x + Math.random(),
+        y: groups[people[d][0].grp].y + Math.random(),
+        r: radius,
+        color: groups[people[d][0].grp].color,
+        group: people[d][0].grp,
+        timeleft: people[d][0].bed_los,
+        istage: 0,
+        stages: people[d],
+        hosp_visit_start: Date.parse(people[d][0].hosp_visit_start),
+        hosp_visit_end: Date.parse(people[d][0].hosp_visit_end)
+    }
+}
 
 
+// =========================
+// FUNCTIONS for FORCES
+// =========================
 
 // Force to increment nodes to groups.
 function forceCluster() {
@@ -277,8 +290,6 @@ function forceCluster() {
 
   return force;
 }
-
-
 
 // Force for collision detection.
 function forceCollide() {
@@ -367,22 +378,14 @@ connection.onmessage = function(event) {
 
     };
     // updatePts(d, d);
-    updateTable();
+    updateTable(mytable);
     // updateViz();
 
     value_as_number = d.value_as_number;
     // console.log(value_as_number);
 }
 
-// ======================
-// Build and update table
-// ======================
-// table inspect : 2nd div on page
-d3.select("#viz_inspect")
-    .append("table");
-
-
-function updateTable () {
+function updateTable (_table) {
     // test function to print the original patient load
     // function updates the data not the viz? not sure this is correct
 
@@ -390,7 +393,8 @@ function updateTable () {
     let dd = msgs.slice(-10).reverse();
     // console.log(dd);
     
-    d3.select("#viz_inspect").select("table")
+    // d3.select("#viz_inspect").select("table")
+   _table
 
         .selectAll("tr")
             .data(dd, function(i) {return i.timestamp;})
