@@ -171,7 +171,7 @@ def star_visits_to_long(df: pd.DataFrame, fake_value: bool = False) -> pd.DataFr
     order by pp.stored_from desc;
     """
     # Convert all ids to integers
-    df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
+    # df = df.astype({"encounter": int, "pp_parent_fact_id": int, "pf_parent_fact_id": int, "property_id": int})
     # Convert to datetime64 else get errors on subtracting non tz aware
     if pd.api.types.is_object_dtype(df['value_as_datetime']):
         df['value_as_datetime'] = pd.to_datetime(df['value_as_datetime'], utc=True)

@@ -13,7 +13,7 @@ DB_USER = config("DB_USER", cast=str)
 WEBSOCKET_SERVER = config("WEBSOCKET_SERVER", cast=str)
 
 # Locally declared variables
-DEBUG=True
+DEBUG=False
 STAR_OR_OMOP="STAR"  # config to define which DB to use
 
 # STAR_OR_OMOP="OMOP"
@@ -76,16 +76,16 @@ else:
             ON pp.attribute = att_pp.attribute_id 
 
         WHERE
-            pf.fact_type IN (6,7,8,9)
+            pf.fact_type IN (5,6,7,8,9)
         AND
             pf.valid_until IS NULL
         AND 
             pp.valid_until IS NULL
         AND 
-        --   pf.stored_from > CURRENT_TIMESTAMP - INTERVAL '6 HOUR' 
-            pf.stored_from > '{}'
-        AND
-            pf.stored_from <= '{}'
+            pf.valid_from > CURRENT_TIMESTAMP - INTERVAL '6 HOUR' 
+--            pf.stored_from > '{}'
+--       AND
+--            pf.stored_from <= '{}'
         ORDER BY pp.stored_from desc;
         """
     elif STAR_OR_OMOP=="OMOP":
