@@ -82,7 +82,7 @@ function x_polar (x, radius) { return width/2 +  radius * Math.cos(degrees2radia
 function y_polar (y, radius) { return height/2 + radius * Math.sin(degrees2radians(y))}
 // TODO need error checking to make sure that positions are unique and sequential
 const group_ring_radius = Math.min(width,height)/2 * 0.70;
-let label_offset = group_ring_radius * 1.5;
+let label_offset = group_ring_radius * 1.4;
 let cnt_offset = group_ring_radius * 1.3;
 let positions = d3.keys(groups).length;
 
