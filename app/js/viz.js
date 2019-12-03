@@ -3,10 +3,25 @@ const people = {};
 const msgs = [];
 var nodes =[];
 
-// Tuning
+// Timer and simulation setting
+// sim_speed x 1 second: how far in realtime the simulation advances with each loop
+// controls how quickly you step through the queried patients
+// e.g. sim_speed 60 means you'll step through 1 minute per loop
+// TODO: ideally you'd like to assymptote this
+var sim_speed = 60;
+// set sim_speed_decay to a number between (0,1] where 1 will mean no decay
+const sim_speed_decay = 0.9;
+sim_speed = 1 + (sim_speed_decay * sim_speed);
+// timer_loop_delay: how long each loop pauses before running again controls
+// the speed of the animation (in microseconds)
 const timer_loop_delay = 10;
+
 let time_so_far = 0;
+// this will get set later to the first in the initial query
 let time_sim;
+
+// Tuning
+
 let earliest_bed_visit;
 let n_discharges = 0;
 
@@ -32,7 +47,7 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-GB', options1);
 // Dimensions of chart.
 const margin = { top: 20, right: 20, bottom: 20, left: 20 },
       width = 900 - margin.left - margin.right,
-      height = 360 - margin.top - margin.bottom; 
+      height = 600 - margin.top - margin.bottom; 
 
 
 
@@ -328,7 +343,7 @@ function timer() {
     if (time_so_far % 1000 === 0) {
 
         simulation.nodes(nodes);
-        simulation.alpha(0.09).restart();
+        simulation.alpha(0.09).velocityDecay(0.5).restart();
     };
     
     nodes.forEach(function(o,i) {
@@ -359,12 +374,19 @@ function timer() {
     cs_inspect = cs;
 
     
-    // Increment time.
-    time_so_far += 1;
-    time_sim += 60000; // microseconds hence 1 minute per loop
+    // Increment time by a step equal to timeleft
+    // this is created from bed_los which is measured in seconds
+    // so each loop moves forward in patient time as below
+    time_so_far += sim_speed * 1; 
+    // microseconds hence 1 minute per loop
+    time_sim += sim_speed * 1 *1000; 
+    // now adjust down the sim speed until it's running in near realtime
+    sim_speed = 1 + (sim_speed_decay * sim_speed);
+
     d3.select("#timenow .cnt").text(dateTimeFormat.format((time_sim)));
     // d3.select("#timenow .cnt").text(dateTimeFormat.format((Date.now())));
-    d3.select("#timecount .cnt").text(time_so_far);
+    // report loops
+    d3.select("#timecount .cnt").text(time_so_far/sim_speed);
     
     // Update counters.
     svg.selectAll('.grpcnt').text(d => groups[d].cnt);
@@ -389,6 +411,7 @@ function make_node_from_people (d, source) {
         r: radius,
         color: groups[people[d][0].grp].color,
         group: people[d][0].grp,
+        // bed los measured in actual seconds
         timeleft: people[d][0].bed_los,
         istage: 0,
         stages: people[d],
