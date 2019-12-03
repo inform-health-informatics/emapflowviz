@@ -11,21 +11,20 @@
 </head>
 <body>
     <div id="main-wrapper">
-    
-        <p id="timecount">Step: <span class="cnt"></span></p>
-        <p id="timenow">Time now: <span class="cnt"></span></p>
+    <p>Live patient movement in ED</p>
+        <!-- <p id="timecount">Step: <span class="cnt"></span></p> -->
         <div id="chart"></div>
     
     </div>
-    <p>Flowing data version</p>
+    <!-- <p>Flowing data version</p> -->
     <!-- <h1 id="timecount">Time now: <span class="cnt"></span></h2 -->
     <!-- <div id="chart"></div> -->
-    <p>Live patient movement in ED</p>
     <div id="viz1"></div>
     <p>Data inspector</p>
+    <p id="timenow">Time now: <span class="cnt"></span></p>
     <div id="viz_inspect"></div>
-    <p>Live Haemoglobin results from UCLH</p>
-    <div id="viz2"></div>
+    <!-- <p>Live Haemoglobin results from UCLH</p> -->
+    <!-- <div id="viz2"></div> -->
     <script type="text/javascript" src="{{ url_for('js', path='lib/d3/d3.min.js')}}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('js', path='viz.js')}}" charset="utf-8"></script>
 </body>

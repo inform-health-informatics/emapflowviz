@@ -62,7 +62,7 @@ let right_col = width*3/4
 
 const groups = {
     "TRIAGE": { position: 1,  color: "green", cnt: 0, fullname: "TRIAGE" },
-    "DIAGNOSTICS": { position: 2,  color: "#FAF49A", cnt: 0, fullname: "DIAGNOSTICS" },
+    "DIAGNOSTICS": { position: 2,  color: "yellow", cnt: 0, fullname: "DIAGNOSTICS" },
     "UTC": { position: 3,  color: "purple", cnt: 0, fullname: "UTC" },
     "RAT": { position: 4,  color: "blue", cnt: 0, fullname: "RAT" },
     "MAJORS": { position: 5,  color: "red", cnt: 0, fullname: "MAJORS" },
@@ -70,9 +70,9 @@ const groups = {
     "OTHER": { position: 7,  color: "orange", cnt: 0, fullname: "OTHER" },
     "PAEDS": { position: 8,  color: "pink", cnt: 0, fullname: "PAEDS" },
     // HOSP visit ended
-    "DC": { position: 9,  color: "black", cnt: 0, fullname: "DC" },
+    "DC": { position: 9,  color: "grey", cnt: 0, fullname: "DISCHARGES" },
     // PLACEHOLDER FOR NEW MESSAGES
-    "NEWBIE": { position: 10,  color: "white", cnt: 0, fullname: "NEWBIE" },
+    "NEWBIE": { position: 10,  color: "white", cnt: 0, fullname: "ARRIVAL" },
 };
 
 // set up positions of wards
@@ -305,14 +305,14 @@ async function initial_pt_load () {
           .text(d => groups[d].fullname);
           
     // Group counts
-    svg.selectAll('.grpcnt')
-      .data(d3.keys(groups))
-      .join("text")
-          .attr("class", "grpcnt")
-          .attr("text-anchor", "middle")
-          .attr("x", d => groups[d].cnt_x)
-          .attr("y", d => groups[d].cnt_y)
-          .text(d => groups[d].cnt);
+    // svg.selectAll('.grpcnt')
+    //   .data(d3.keys(groups))
+    //   .join("text")
+    //       .attr("class", "grpcnt")
+    //       .attr("text-anchor", "middle")
+    //       .attr("x", d => groups[d].cnt_x)
+    //       .attr("y", d => groups[d].cnt_y)
+    //       .text(d => groups[d].cnt);
 
     simulation.nodes(nodes);
     simulation.alpha(0.01).velocityDecay(0.5).restart();
@@ -328,14 +328,27 @@ function timer() {
 
     cs = cs.data(nodes, d => d.person_id);
     cs.exit()
-        .attr("fill", "black")
+        .transition()
+        .duration(1000)
+        .attr("id", d => d.person_id)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .transition()
+        .duration(1000)
+        .attr("fill", "grey")
+        .attr("r", 3)
+        // .merge(cs)
         .remove();
     cs = cs.enter().append("circle")
           .attr("id", d => d.person_id)
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
-          .attr("fill", d => d.color)
-          .attr("r", 5)
+        //   .attr("fill", d => d.color)
+          .attr("fill", d => "white")
+          .attr("r", 8)
+        //   .transition()
+        //   .duration(1000)
+        //   .attr("fill", d => d.color)
           .merge(cs);
 
     // update simulation with new nodes every second (even though they're
@@ -432,7 +445,11 @@ function ticked () {
     cs
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
-        .attr("fill", d => groups[d.group].color);
+        .attr("fill", d => groups[d.group].color)
+        // .transition()
+        // .duration(1000)
+        .attr("r", 5)
+        ;
         // .attr("fill", function(d) {
         //     if (d.source === "websocket") {
         //         "white"
