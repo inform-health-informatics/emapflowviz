@@ -212,8 +212,11 @@ connection.onmessage = function(event) {
               .attr("id", d => d.person_id)
               .attr("cx", d => d.x)
               .attr("cy", d => d.y)
+              .attr("r", 8)
               .attr("fill", d => d.color)
-              .attr("r", 5)
+            // .transition()
+            // .duration(1000)
+            //   .attr("fill", "white")
               .merge(cs);
 
         simulation.nodes(nodes);
@@ -269,11 +272,11 @@ async function initial_pt_load () {
     
     // t = svg.transition().duration(1500).ease(i => i);
     cs = cs.data(nodes, d => d.person_id);
-    cs.exit()
-        .transition()
-        .duration(1000)
-        .attr("fill", "black")
-        .remove();
+    // cs.exit()
+    //     .transition()
+    //     .duration(1000)
+    //     .attr("fill", "black")
+    //     .remove();
     cs = cs.enter().append("circle")
           .attr("id", d => d.person_id)
           .attr("cx", d => d.x)
@@ -335,7 +338,7 @@ function timer() {
         .attr("cy", d => d.y)
         .transition()
         .duration(1000)
-        .attr("fill", "grey")
+        // .attr("fill", "grey")
         .attr("r", 3)
         // .merge(cs)
         .remove();
@@ -344,11 +347,11 @@ function timer() {
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
         //   .attr("fill", d => d.color)
-          .attr("fill", d => "white")
+        //   .attr("fill", d => "white")
           .attr("r", 8)
         //   .transition()
         //   .duration(1000)
-        //   .attr("fill", d => d.color)
+          .attr("fill", d => d.color)
           .merge(cs);
 
     // update simulation with new nodes every second (even though they're
