@@ -5,7 +5,7 @@ itsdangerous==1.1.0
 psycopg2==2.8.4
 
 # to manage data transformations
-numpy==1.17.4
+numpy==1.22.0
 pandas==0.25.3
 pytz==2019.3
 six==1.13.0
